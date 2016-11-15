@@ -70,7 +70,8 @@ for mass in sorted(samples.keys()):
     fitter.fit('model','data',[ROOT.RooFit.SumW2Error(0)])
     fitter.fit('model','data',[ROOT.RooFit.SumW2Error(0)])
 
-    fitter.projection("model","data","MVV","debugVV_"+str(mass)+".root")
+    fitter.projection("model","data","MVV","debugVV_"+options.output+"_"+str(mass)+".root")
+    fitter.projection("model","data","MVV","debugVV_"+options.output+"_"+str(mass)+".png")
 
     for var,graph in graphs.iteritems():
         value,error=fitter.fetch(var)

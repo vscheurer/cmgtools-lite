@@ -47,13 +47,13 @@ data=MergedPlotter(dataPlotters)
 denominator = data.drawTH1("0.5",options.cutDenominator,"1",1,0,1)
 
 cut=options.cutNumerator
-nominal = data.drawTH1("0.5",'&&'.join([options.cutDenominator,cut]),"1",1,0,1)
+nominal = data.drawTH1("0.5",'*'.join([options.cutDenominator,cut]),"1",1,0,1)
 
 cut=options.cutNumerator.replace(options.var,"("+str(options.factor)+"*"+options.var+")")
-up = data.drawTH1("0.5",'&&'.join([options.cutDenominator,cut]),"1",1,0,1)
+up = data.drawTH1("0.5",'*'.join([options.cutDenominator,cut]),"1",1,0,1)
 
 cut=options.cutNumerator.replace(options.var,"("+str(1.0/options.factor)+"*"+options.var+")")
-down = data.drawTH1("0.5",'&&'.join([options.cutDenominator,cut]),"1",1,0,1)
+down = data.drawTH1("0.5",'*'.join([options.cutDenominator,cut]),"1",1,0,1)
 
 
 effUp = abs(up.Integral()/nominal.Integral())

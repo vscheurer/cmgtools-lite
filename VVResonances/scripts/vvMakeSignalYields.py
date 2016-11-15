@@ -87,6 +87,11 @@ f=open(options.output+".json","w")
 json.dump(parameterization,f)
 f.close()
 
+f=ROOT.TFile(options.output+".root","RECREATE")
+f.cd()
+yieldgraph.Write("yield")
+f.Close()
+
 c=ROOT.TCanvas("c")
 c.cd()
 yieldgraph.Draw("AP")

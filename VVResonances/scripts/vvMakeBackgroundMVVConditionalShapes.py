@@ -24,7 +24,7 @@ parser.add_option("-V","--vary",dest="vary",help="variablex",default='lnujj_l2_p
 parser.add_option("-B","--binsy",dest="binsy",type=int,help="bins in x",default=20)
 parser.add_option("-y","--miny",dest="miny",type=float,help="minimum y",default=0)
 parser.add_option("-Y","--maxy",dest="maxy",type=float, help="maximum y",default=160)
-parser.add_option("-l","--lumi",dest="lumi",type=float, help="lumi",default=7700)
+parser.add_option("-l","--lumi",dest="lumi",type=float, help="lumi",default=1)
 
 (options,args) = parser.parse_args()
 
@@ -73,7 +73,7 @@ def runFits(data,options):
                 cerr=abs(c)*10000
             g.SetPoint(i-1,center,c)
             g.SetPointError(i-1,0.0,cerr)
-    parameter0=ROOT.TF1("pol0","pol0",options.minx,options.maxx)
+    parameter0=ROOT.TF1("pol2","pol2",options.minx,options.maxx)
     graphs[0].Fit(parameter0)
     
 
@@ -205,6 +205,13 @@ for filename in os.listdir(args[0]):
             dataPlotters[-1].addCorrectionFactor('genWeight','tree')
             dataPlotters[-1].addCorrectionFactor('puWeight','tree')
     
+
+sigmas=[]
+for d in dataPlotters:
+    sigmas.append(d.tree.GetMaximum("xsec")/d.weightinv)
+sigmaW=max(sigmas)
+for p in dataPlotters:
+    p.addCorrectionFactor(1.0/sigmaW,'flat')
 
 
 

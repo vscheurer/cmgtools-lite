@@ -30,14 +30,45 @@ if options.function=='expo':
     fitter.expo('model','x')
     parameterization['type']='expo'
 
+if options.function=='twoExp':
+    fitter.twoExp('model','x')
+    parameterization['type']='erfexp'
+
+
+if options.function=='expoTail':
+    fitter.expoTail('model','x')
+    parameterization['type']='expoTail'
+
+
+if options.function=='pow':
+    fitter.pow('model','x')
+    parameterization['type']='expo'
+
+if options.function=='upperCB':
+    fitter.upperCB('model','x')
+    parameterization['type']='upperCB'
+    parameterization['c_0']=0.0
+    parameterization['c_2']=1.0
+    parameterization['c_3']=5.0
+    parameterization['c_5']=5.0
+
 if options.function=='erfpow':
     fitter.erfpow('model','x')
+    parameterization['type']='erfpow'
+
+if options.function=='erfpowinv':
+    fitter.erfpowinv('model','x')
     parameterization['type']='erfpow'
 
 
 if options.function=='erfexp':
     fitter.erfexp('model','x')
     parameterization['type']='erfexp'
+
+if options.function=='erfexpinv':
+    fitter.erfexpinv('model','x')
+    parameterization['type']='erfexp'
+
 
 if options.function=='erfexpCB':
     fitter.erfexpCB('model','x')
@@ -58,14 +89,22 @@ fitter.fit('model','data',[ROOT.RooFit.SumW2Error(1)])
 fitter.fit('model','data',[ROOT.RooFit.SumW2Error(1)])
 
 fitter.projection("model","data","x","debug"+options.output+".root",options.title)
-fitter.projection("model","data","x","debug"+options.output+".png",options.title)
+chi=fitter.projection("model","data","x","debug"+options.output+".png",options.title)
 
-
+print 'Chi2',chi
 
 if parameterization['type']=='expo':
     val,err=fitter.fetch('c_0')
     parameterization['c_0']=val
     parameterization['c_0Err']=err
+
+
+if parameterization['type']=='expoTail':
+    for i in range(0,2):
+        var='c_'+str(i)
+        val,err=fitter.fetch(var)
+        parameterization[var]=val
+        parameterization[var+'Err']=err
 
 
 if parameterization['type']=='erfexp':
@@ -74,6 +113,15 @@ if parameterization['type']=='erfexp':
         val,err=fitter.fetch(var)
         parameterization[var]=val
         parameterization[var+'Err']=err
+
+if parameterization['type']=='upperCB':
+    for i in range(0,6):
+        var='c_'+str(i)
+        val,err=fitter.fetch(var)
+        parameterization[var]=val
+        parameterization[var+'Err']=err
+    
+
 
 
 if parameterization['type']=='erfpow':

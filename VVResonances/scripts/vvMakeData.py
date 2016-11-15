@@ -43,11 +43,23 @@ for filename in os.listdir(args[0]):
             if ext.find("root") ==-1:
                 continue
             dataPlotters.append(TreePlotter(args[0]+'/'+fname+'.root','tree'))
-            if options.data==0:
+            if options.data==0 or options.data==2:
                 dataPlotters[-1].setupFromFile(args[0]+'/'+fname+'.pck')
                 dataPlotters[-1].addCorrectionFactor('xsec','tree')
                 dataPlotters[-1].addCorrectionFactor('genWeight','tree')
                 dataPlotters[-1].addCorrectionFactor('puWeight','tree')
+if options.data==2:
+    sigmas=[]
+    for d in dataPlotters:
+        sigmas.append(d.tree.GetMaximum("xsec")/d.weightinv)
+    sigmaW=max(sigmas)
+    for p in dataPlotters:
+        p.addCorrectionFactor(1.0/sigmaW,'flat')
+
+
+
+        
+
     
 
 data=MergedPlotter(dataPlotters)

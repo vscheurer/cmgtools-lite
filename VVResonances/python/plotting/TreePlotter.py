@@ -23,7 +23,7 @@ class TreePlotter(PlotterBase):
         data=pickle.load(f)
         weightinv = float(data['events'])
         self.addCorrectionFactor(1./weightinv,'flat')
-
+        self.weightinv=weightinv
             
     def applySmoothing(self):
         self.smooth=True

@@ -4,23 +4,33 @@ import ROOT
 from array import array
 import os, sys, re, optparse,pickle,shutil,json
 
+#def returnHisto(name,w,binsx,minx,maxx,binsy,miny,maxy):
+#    histo=ROOT.TH2D(name,name,binsx,minx,maxx,binsy,miny,maxy)
+#    for i in range(1,histo.GetNbinsX()+1):
+#        sumi=0
+#        for j in range(1,histo.GetNbinsY()+1):
+#            bin=histo.GetBin(i,j)
+#            x=histo.GetXaxis().GetBinCenter(i)
+#            y=histo.GetYaxis().GetBinCenter(j)
+#            w.var("MVV").setVal(x)
+#            w.var("mjj").setVal(y)
+#            val=w.pdf("pdf").getVal()
+#            histo.SetBinContent(bin,val)
+#            sumi=sumi+val
+#    histo.Scale(1.0/histo.Integral())        
+#    return histo
+
+
+
 def returnHisto(name,w,binsx,minx,maxx,binsy,miny,maxy):
-    histo=ROOT.TH2D(name,name,binsx,minx,maxx,binsy,miny,maxy)
-    for i in range(1,histo.GetNbinsX()+1):
-        sumi=0
-        for j in range(1,histo.GetNbinsY()+1):
-            bin=histo.GetBin(i,j)
-            x=histo.GetXaxis().GetBinCenter(i)
-            y=histo.GetYaxis().GetBinCenter(j)
-            w.var("MVV").setVal(x)
-            w.var("mjj").setVal(y)
-            val=w.pdf("pdf").getVal()
-            histo.SetBinContent(bin,val)
-            sumi=sumi+val
-#        if sumi>0: #renormalize    
-#            for j in range(1,histo.GetNbinsY()+1):
-#                bin=histo.GetBin(i,j)
-#                histo.SetBinContent(bin,histo.GetBinContent(bin)/sumi)
+
+    w.var("MVV").setMin(minx)
+    w.var("MVV").setMax(maxx)
+    w.var("mjj").setMin(miny)
+    w.var("mjj").setMax(maxy)
+
+    histo=w.pdf("pdf").createHistogram("MVV,mjj",binsx,binsy)
+    histo.SetName(name)
     histo.Scale(1.0/histo.Integral())        
     return histo
 
@@ -178,7 +188,10 @@ for syst,info in systs0.iteritems():
     syst0Str+="+{factor}*{syst}".format(factor=factor,syst=syst)
     systsV0.append(syst)
 
+
 if dataInfo['type']=='erfexp':
+
+    print 'FOUND ERROR FUNCTION x EXP'
     for syst,info in systs1.iteritems():
         systUnc2[syst]=info['unc']
         factor = info['factor']
@@ -211,10 +224,12 @@ f=ROOT.TFile(options.output,"RECREATE")
 f.cd()
 
 #create nominal:
+print 'NOMINAL SHAPE'
 nominal=returnHisto(options.name,w,options.binsx,options.minx,options.maxx,options.binsy,options.miny,options.maxy)
 nominal.Write()
 
 for syst,unc in systUnc.iteritems():
+    print 'SYST VARIED SHAPE:',syst
     w.var(syst).setVal(0+3*unc)
     h=returnHisto(options.name+"_"+syst+"Up",w,options.binsx,options.minx,options.maxx,options.binsy,options.miny,options.maxy)
     h.Write()
@@ -225,6 +240,7 @@ for syst,unc in systUnc.iteritems():
 
 
 for syst,unc in systUnc2.iteritems():
+    print 'SYST VARIED SHAPE:',syst
     w.var(syst).setVal(0+3*unc)
     h=returnHisto(options.name+"_"+syst+"Up",w,options.binsx,options.minx,options.maxx,options.binsy,options.miny,options.maxy)
     h.Write()

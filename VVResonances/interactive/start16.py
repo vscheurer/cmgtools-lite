@@ -47,7 +47,7 @@ def compare(p1,p2,var,cut1,cut2,bins,mini,maxi,title,unit,leg1,leg2):
 
 cuts={}
 
-cuts['common'] = '(((HLT2_MU||HLT2_ELE||HLT2_ISOMU||HLT2_ISOELE||HLT2_MET120)&&run>2000)+(run<2000)*lnujj_sf)*(Flag_goodVertices&&Flag_CSCTightHaloFilter&&Flag_HBHENoiseFilter&&Flag_HBHENoiseIsoFilter&&Flag_eeBadScFilter&&lnujj_nOtherLeptons==0&&lnujj_l2_pruned_mass>0&&lnujj_LV_mass>600&&Flag_badChargedHadronFilter&&Flag_badMuonFilter&&(abs(lnujj_l1_l_pdgId)==11||(abs(lnujj_l1_l_pdgId)==13&&lnujj_l1_l_relIso04<0.1)))'
+cuts['common'] = '(((HLT2_MU||HLT2_ELE||HLT2_ISOMU||HLT2_ISOELE||HLT2_MET120)&&run>2000)+(run<2000)*lnujj_sf)*(Flag_goodVertices&&Flag_CSCTightHaloFilter&&Flag_HBHENoiseFilter&&Flag_HBHENoiseIsoFilter&&Flag_eeBadScFilter&&lnujj_nOtherLeptons==0&&lnujj_l2_softDrop_mass>0&&lnujj_LV_mass>600&&Flag_badChargedHadronFilter&&Flag_badMuonFilter&&(abs(lnujj_l1_l_pdgId)==11||(abs(lnujj_l1_l_pdgId)==13&&lnujj_l1_l_relIso04<0.1)))'
 
 
 cuts['mu'] = '(abs(lnujj_l1_l_pdgId)==13)'
@@ -175,7 +175,7 @@ data = MergedPlotter(dataPlotters)
 
 #Stack for lnu+J
 lnujjStack = StackPlotter()
-#lnujjStack.addPlotter(QCD,"QCD","QCD multijet","background")
+lnujjStack.addPlotter(QCD,"QCD","QCD multijet","background")
 lnujjStack.addPlotter(ttO,"tt","t#bar{t} (other)","background")
 lnujjStack.addPlotter(WJets,"WJets","W+Jets","background")
 lnujjStack.addPlotter(ttM,"tt","t#bar{t} (W)","background")

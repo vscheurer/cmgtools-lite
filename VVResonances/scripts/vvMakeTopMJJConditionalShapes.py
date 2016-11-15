@@ -21,7 +21,7 @@ parser.add_option("-b","--binsx",dest="binsx",type=int,help="bins in x",default=
 parser.add_option("-x","--minx",dest="minx",type=float,help="minimum x",default=600)
 parser.add_option("-X","--maxx",dest="maxx",type=float, help="maximum x",default=5000)
 parser.add_option("-V","--vary",dest="vary",help="variablex",default='lnujj_l2_pruned_mass')
-parser.add_option("-l","--lumi",dest="lumi",type=float, help="lumi",default=7700)
+parser.add_option("-l","--lumi",dest="lumi",type=float, help="lumi",default="1")
 
 (options,args) = parser.parse_args()
 
@@ -40,17 +40,15 @@ def returnString(func,options):
 
 
 def runFits(data,options):
-    axis=ROOT.TAxis(5,array('d',[600,700,800,900,1000,1200,1400]))
+#    axis=ROOT.TAxis(10,array('d',[600,800,900,1000,1250,1500,2000,2500,3000,3500,4000]))
+    axis=ROOT.TAxis(8,array('d',[600,700,800,900,1000,1250,1500,2000,2500]))
 
-   #first pass     
-    graphs=[]
-    for i in range(0,6):
-        graphs.append(ROOT.TGraphErrors())
+    graphs={'mean':ROOT.TGraphErrors(),'sigma':ROOT.TGraphErrors(),'alpha':ROOT.TGraphErrors(),'n':ROOT.TGraphErrors(),'alpha2':ROOT.TGraphErrors(),'n2':ROOT.TGraphErrors()}
 
     for i in range(1,axis.GetNbins()+1):
     
         center=axis.GetBinCenter(i)
-        h = data.drawTH1(options.varx,options.cut+"&&({vary}>{mini}&&{vary}<{maxi})".format(vary=options.vary,mini=axis.GetBinLowEdge(i),maxi=axis.GetBinUpEdge(i)),str(options.lumi),options.binsx,options.minx,options.maxx) 
+        h = data.drawTH1(options.varx,options.cut+"*({vary}>{mini}&&{vary}<{maxi})".format(vary=options.vary,mini=axis.GetBinLowEdge(i),maxi=axis.GetBinUpEdge(i)),str(options.lumi),options.binsx,options.minx,options.maxx) 
 
         histo=copy.deepcopy(h)
         fitter=Fitter(['M'])
@@ -59,52 +57,29 @@ def runFits(data,options):
         fitter.w.var("M").setMin(options.minx)
 
 
-        fitter.signalMJJCB('model','M')
+        fitter.jetResonanceNOEXP('model','M')
+        fitter.w.var("alpha").setVal(1.5)
+        fitter.w.var("alpha").setConstant(1)
+#        fitter.w.var("alpha2").setVal(1)
+#        fitter.w.var("alpha2").setConstant(1)
+
         fitter.importBinnedData(histo,['M'],'data')   
-        fitter.fit('model','data',[ROOT.RooFit.SumW2Error(0),ROOT.RooFit.Minos(1)])
+        fitter.fit('model','data',[ROOT.RooFit.SumW2Error(1),ROOT.RooFit.Minos(0)])
+        fitter.fit('model','data',[ROOT.RooFit.SumW2Error(1),ROOT.RooFit.Minos(1)])
         chi=fitter.projection("model","data","M","debugfitMJJTop_"+options.output+"_"+str(i)+".png")
     
-        for j,g in enumerate(graphs):
-            c,cerr=fitter.fetch("c_"+str(j))
-            g.SetPoint(i-1,center,c)
-            g.SetPointError(i-1,0.0,cerr)
+        for var,graph in graphs.iteritems():
+            value,error=fitter.fetch(var)
+            graph.SetPoint(i-1,center,value)
+            graph.SetPointError(i-1,0.0,error)
+
+    F=ROOT.TFile(options.output+".root","RECREATE")
+    F.cd()
+    for name,graph in graphs.iteritems():
+        graph.Write(name)
+    F.Close()
 
 
-
-    data={}
-    pol4=ROOT.TF1("pol4","pol4",options.minx,options.maxx)
-    pol3=ROOT.TF1("pol3","pol3",options.minx,options.maxx)
-    pol2=ROOT.TF1("pol2","pol2",options.minx,options.maxx)
-    pol1=ROOT.TF1("pol1","pol1",options.minx,options.maxx)
-    pol0=ROOT.TF1("pol0","pol0",options.minx,options.maxx)
-    log=ROOT.TF1("log0","[0]+[1]*log(x)",options.minx,options.maxx)
-
-
-    graphs[0].Fit(log)
-    data['mean']=returnString(log,options)
-
-    graphs[1].Fit(pol0)
-    data['sigma']=returnString(pol0,options)
-
-    graphs[2].Fit(log)
-    data['alpha1']=returnString(log,options)
-
-    graphs[3].Fit(pol0)
-    data['n1']=returnString(pol0,options)
-
-    graphs[4].Fit(pol0)
-    data['alpha2']=returnString(pol0,options)
-
-    graphs[5].Fit(pol0)
-    data['n2']=returnString(pol0,options)
-    
-
-
-    #create json
-    f=open(options.output+".json","w")
-    json.dump(data,f)
-    f.close()
-    return graphs
 
 #Initialize plotters
 
@@ -128,9 +103,15 @@ for filename in os.listdir(args[0]):
             dataPlotters.append(TreePlotter(args[0]+'/'+fname+'.root','tree'))
             dataPlotters[-1].setupFromFile(args[0]+'/'+fname+'.pck')
             dataPlotters[-1].addCorrectionFactor('xsec','tree')
-            dataPlotters[-1].addCorrectionFactor('genWeight','tree')
+#            dataPlotters[-1].addCorrectionFactor('genWeight','tree')
             dataPlotters[-1].addCorrectionFactor('puWeight','tree')
     
+sigmas=[]
+for d in dataPlotters:
+    sigmas.append(d.tree.GetMaximum("xsec")/d.weightinv)
+sigmaW=max(sigmas)
+for p in dataPlotters:
+    p.addCorrectionFactor(1.0/sigmaW,'flat')
 
 
 
@@ -142,13 +123,6 @@ data=MergedPlotter(dataPlotters)
 
 
 graphs=runFits(data,options)
-
-f=ROOT.TFile(options.output+".root","RECREATE")
-f.cd()
-for i,g in enumerate(graphs):
-    g.Write("p"+str(i))
-f.Close()
-
     
     
     

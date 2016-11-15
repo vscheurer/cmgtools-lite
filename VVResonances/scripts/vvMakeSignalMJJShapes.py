@@ -21,12 +21,15 @@ parser.add_option("-s","--sample",dest="sample",default='',help="Type of sample"
 parser.add_option("-c","--cut",dest="cut",help="Cut to apply for shape",default='')
 parser.add_option("-o","--output",dest="output",help="Output JSON",default='')
 parser.add_option("-V","--MVV",dest="mvv",help="mVV variable",default='')
+parser.add_option("-m","--min",dest="mini",type=float,help="min MJJ",default=40)
+parser.add_option("-M","--max",dest="maxi",type=float,help="max MJJ",default=160)
+parser.add_option("-e","--exp",dest="doExp",type=int,help="useExponential",default=1)
 
 (options,args) = parser.parse_args()
 #define output dictionary
 
 samples={}
-graphs={'mean':ROOT.TGraphErrors(),'sigma':ROOT.TGraphErrors(),'alpha':ROOT.TGraphErrors(),'n':ROOT.TGraphErrors(),'f':ROOT.TGraphErrors(),'slope':ROOT.TGraphErrors()}
+graphs={'mean':ROOT.TGraphErrors(),'sigma':ROOT.TGraphErrors(),'alpha':ROOT.TGraphErrors(),'n':ROOT.TGraphErrors(),'f':ROOT.TGraphErrors(),'slope':ROOT.TGraphErrors(),'alpha2':ROOT.TGraphErrors(),'n2':ROOT.TGraphErrors()}
 
 for filename in os.listdir(args[0]):
     if not (filename.find(options.sample)!=-1):
@@ -62,14 +65,22 @@ for mass in sorted(samples.keys()):
        
         
     fitter=Fitter(['x'])
-    fitter.jetResonance('model','x')
+    if options.doExp==1:
+        fitter.jetResonance('model','x')
+#        fitter.w.var("alpha").setVal(1.41)
+#        fitter.w.var("alpha").setConstant(1)
+    else:
+        fitter.jetResonanceNOEXP('model','x')
+#        fitter.w.var("alpha").setVal(0.50)
+#        fitter.w.var("alpha").setConstant(1)
+
 #    fitter.w.var("MH").setVal(mass)
-    histo = plotter.drawTH1(options.mvv,options.cut,"1",40,40,160)
+    histo = plotter.drawTH1(options.mvv,options.cut,"1",int((options.maxi-options.mini)/4),options.mini,options.maxi)
 
     fitter.importBinnedData(histo,['x'],'data')
     fitter.fit('model','data',[ROOT.RooFit.SumW2Error(0)])
     fitter.fit('model','data',[ROOT.RooFit.SumW2Error(0),ROOT.RooFit.Minos(1)])
-    fitter.projection("model","data","x","debugJJ_"+str(mass)+".png")
+    fitter.projection("model","data","x","debugJJ_"+options.output+"_"+str(mass)+".png")
 
     for var,graph in graphs.iteritems():
         value,error=fitter.fetch(var)
