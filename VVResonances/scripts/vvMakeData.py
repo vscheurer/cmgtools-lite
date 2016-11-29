@@ -97,6 +97,11 @@ if len(pvars)==3:
 #                    if histo.GetBinContent(bin)<0:
 #                        histo.SetBinContent(bin,0.0)
 
+
+#PROTECTION
+
+
+
 histo.Scale(options.factor)
 F=ROOT.TFile(options.output,"UPDATE")
 F.cd()

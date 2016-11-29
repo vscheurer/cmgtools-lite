@@ -14,26 +14,25 @@ plotter=RooPlotter("combined.root")
 plotter.fix("MH",2000)
 plotter.fix("r",0.0)
 plotter.prefit()
-#plotter.addContribution("XWW",True,"X #rightarrow WW",3,1,ROOT.kOrange+10,0,ROOT.kWhite)
-plotter.addContribution("topW",False," t#bar{t} (W)",2,1,ROOT.kBlack,1001,ROOT.kTeal-1)
-plotter.addContribution("WW",False,"SM WW",2,1,ROOT.kBlack,1001,ROOT.kOrange)
-plotter.addContribution("WZ",False,"SM WZ",2,1,ROOT.kBlack,1001,ROOT.kOrange+10)
-plotter.addContribution("Wjets",False,"V+jets",2,1,ROOT.kBlack-3,1001,ROOT.kAzure-9,"_opt")
+plotter.addContribution("XWW",True,"X #rightarrow WW",3,1,ROOT.kOrange+10,0,ROOT.kWhite)
+plotter.addContribution("resW",False," W+V",2,1,ROOT.kBlack,1001,ROOT.kSpring-5)
+#plotter.addContribution("WW",False,"SM WW",2,1,ROOT.kBlack,1001,ROOT.kOrange)
+#plotter.addContribution("WZ",False,"SM WZ",2,1,ROOT.kBlack,1001,ROOT.kOrange+10)
+plotter.addContribution("nonRes",False,"W+jets",2,1,ROOT.kBlack-3,1001,ROOT.kAzure-9,"_opt")
 #plotter.addContribution("Wjets_quark",False,"V+jets(q)",2,1,ROOT.kBlack-3,1001,ROOT.kAzure-9)
 #plotter.addContribution("Wjets_gluon",False,"V+jets(g)",2,1,ROOT.kBlack-3,1001,ROOT.kBlue+1)
-plotter.addContribution("topOther",False,"t#bar{t} (other)",2,1,ROOT.kBlack,1001,ROOT.kSpring-5,"_opt")
+#plotter.addContribution("topOther",False,"t#bar{t} (other)",2,1,ROOT.kBlack,1001,ROOT.kSpring-5,"_opt")
 
 #plotter.drawStack("MJ","m_{j} [GeV]","nob_mu_HP_13TeV")
 
 
-#for l in ['mu','e']:
-#    for p in ['HP','LP']:
-#        for c in ['nob','b']:
-#            plotter.drawStack("MJ","m_{j} [GeV]",c+"_"+l+"_"+p+"_13TeV")
-#            plotter.canvas.SaveAs("postfitMJJ"+c+"_"+l+"_"+p+".png")
-#            plotter.drawStack("MLNuJ","m_{VV} [GeV]",c+"_"+l+"_"+p+"_13TeV")
-#            plotter.canvas.SaveAs("postfitMVV"+c+"_"+l+"_"+p+".png")
-
+for l in ['mu','e']:
+    for p in ['both']:
+        for c in ['vbf']:
+            plotter.drawProjection("MJ","m_{j} [GeV]",c+"_"+l+"_"+p+"_13TeV",1,0)
+            plotter.canvas.SaveAs("postfitMJJ"+c+"_"+l+"_"+p+".png")
+            plotter.drawProjection("MLNuJ","m_{VV} [GeV]",c+"_"+l+"_"+p+"_13TeV",1,0)
+            plotter.canvas.SaveAs("postfitMVV"+c+"_"+l+"_"+p+".png")
 
 
 

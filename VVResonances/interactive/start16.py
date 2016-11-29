@@ -47,7 +47,7 @@ def compare(p1,p2,var,cut1,cut2,bins,mini,maxi,title,unit,leg1,leg2):
 
 cuts={}
 
-cuts['common'] = '(((HLT2_MU||HLT2_ELE||HLT2_ISOMU||HLT2_ISOELE||HLT2_MET120)&&run>2000)+(run<2000)*lnujj_sf)*(Flag_goodVertices&&Flag_CSCTightHaloFilter&&Flag_HBHENoiseFilter&&Flag_HBHENoiseIsoFilter&&Flag_eeBadScFilter&&lnujj_nOtherLeptons==0&&lnujj_l2_softDrop_mass>0&&lnujj_LV_mass>600&&Flag_badChargedHadronFilter&&Flag_badMuonFilter&&(abs(lnujj_l1_l_pdgId)==11||(abs(lnujj_l1_l_pdgId)==13&&lnujj_l1_l_relIso04<0.1)))'
+cuts['common'] = '(((HLT2_MU||HLT2_ELE||HLT2_ISOMU||HLT2_ISOELE||HLT2_MET120)&&run>2000)+(run<2000)*lnujj_sf)*(Flag_goodVertices&&Flag_CSCTightHaloFilter&&Flag_HBHENoiseFilter&&Flag_HBHENoiseIsoFilter&&Flag_eeBadScFilter&&lnujj_nOtherLeptons==0&&lnujj_l2_softDrop_mass>0&&lnujj_LV_mass>600&&Flag_badChargedHadronFilter&&Flag_badMuonFilter&&(abs(lnujj_l1_l_pdgId)==11||(abs(lnujj_l1_l_pdgId)==13&&lnujj_l1_l_chargedHadRelIso03<0.05)))'
 
 
 cuts['mu'] = '(abs(lnujj_l1_l_pdgId)==13)'
@@ -71,8 +71,17 @@ iPos = 11
 
 
 
+zjPlotters=[]
 
- 
+
+for sample in ["DYJetsToLL_M50_HT100to200","DYJetsToLL_M50_HT200to400","DYJetsToLL_M50_HT400to600","DYJetsToLL_M50_HT600toInf"]:
+    zjPlotters.append(TreePlotter('samples/'+sample+'.root','tree'))
+    zjPlotters[-1].setupFromFile('samples/'+sample+'.pck')
+    zjPlotters[-1].addCorrectionFactor('xsec','tree')
+    zjPlotters[-1].addCorrectionFactor('genWeight','tree')
+    zjPlotters[-1].addCorrectionFactor('puWeight','tree')
+
+
 
 #create the W+jets plotters
 wjPlotters=[]
@@ -87,23 +96,19 @@ for sample in ["WJetsToLNu_HT1200to2500","WJetsToLNu_HT2500toInf","WJetsToLNu_HT
     wjPlotters[-1].addCorrectionFactor('puWeight','tree')
 #    wjPlotters[-1].addCorrectionFactor('0.82','flat')
 
-WJets = MergedPlotter(wjPlotters)
+VJets = MergedPlotter(wjPlotters+zjPlotters)
 
 
 
-ttO=TreePlotter('samples/TTJets.root','tree')
-ttO.setupFromFile('samples/TTJets.pck')
-ttO.addCorrectionFactor('xsec','tree')
-ttO.addCorrectionFactor('genWeight','tree')
-ttO.addCorrectionFactor('puWeight','tree')
-ttO.addCorrectionFactor('(!(lnujj_l2_mergedVTruth==1&&lnujj_l2_nearestBDRTruth>0.8))','tree')
+ttPlotters=[]
+for sample in ['TTJets','T_tWch','TBar_tWch']:
+    ttPlotters.append(TreePlotter('samples/'+sample+'.root','tree'))
+    ttPlotters[-1].setupFromFile('samples/'+sample+'.pck')
+    ttPlotters[-1].addCorrectionFactor('xsec','tree')
+    ttPlotters[-1].addCorrectionFactor('genWeight','tree')
+    ttPlotters[-1].addCorrectionFactor('puWeight','tree')
 
-ttM=TreePlotter('samples/TTJets.root','tree')
-ttM.setupFromFile('samples/TTJets.pck')
-ttM.addCorrectionFactor('xsec','tree')
-ttM.addCorrectionFactor('genWeight','tree')
-ttM.addCorrectionFactor('puWeight','tree')
-ttM.addCorrectionFactor('(lnujj_l2_mergedVTruth==1&&lnujj_l2_nearestBDRTruth>0.8)','tree')
+tt=MergedPlotter(ttPlotters)
 
 
 
@@ -160,12 +165,9 @@ WWLNUJJ.setLineProperties(1,ROOT.kRed,3)
 
 
 #Fill properties
-WJets.setFillProperties(1001,ROOT.kAzure-9)
+VJets.setFillProperties(1001,ROOT.kAzure-9)
 vv.setFillProperties(1001,ROOT.kOrange)
-ttO.setFillProperties(1001,ROOT.kSpring-5)
-ttM.setFillProperties(1001,ROOT.kTeal-1)
-#ZJets.setFillProperties(1001,ROOT.kAzure+5)
-#GJets.setFillProperties(1001,ROOT.kYellow)
+tt.setFillProperties(1001,ROOT.kSpring-5)
 QCD.setFillProperties(1001,ROOT.kGray)
 
 
@@ -176,17 +178,19 @@ data = MergedPlotter(dataPlotters)
 #Stack for lnu+J
 lnujjStack = StackPlotter()
 lnujjStack.addPlotter(QCD,"QCD","QCD multijet","background")
-lnujjStack.addPlotter(ttO,"tt","t#bar{t} (other)","background")
-lnujjStack.addPlotter(WJets,"WJets","W+Jets","background")
-lnujjStack.addPlotter(ttM,"tt","t#bar{t} (W)","background")
 lnujjStack.addPlotter(vv,"VV","SM WV","background")
-#lnujjStack.addPlotter(WWLNUJJ,"X1","VBF X #rightarrow WW","signal")
-#lnujjStack.addPlotter(WZLNUJJ,"X2","X #rightarrow WZ","signal")
-#lnujjStack.addPlotter(WHLNUJJ,"X3","X #rightarrow WH","signal")
+lnujjStack.addPlotter(tt,"top","top","background")
+lnujjStack.addPlotter(VJets,"WJets","V+Jets","background")
 lnujjStack.addPlotter(data,"data_obs","Data","data")
 
 
-jjStack = StackPlotter()
-jjStack.addPlotter(QCD,"QCD","QCD multijet","background")
-jjStack.addPlotter(data,"data_obs","Data","data")
+
+lnujjStackR = StackPlotter()
+lnujjStackR.addPlotter(QCD,"QCD","QCD multijet","background")
+lnujjStackR.addPlotter(VJets,"WJets","V+Jets","background")
+lnujjStackR.addPlotter(vv,"VV","SM WV","background")
+lnujjStackR.addPlotter(tt,"top","top","background")
+lnujjStackR.addPlotter(data,"data_obs","Data","data")
+
+
 

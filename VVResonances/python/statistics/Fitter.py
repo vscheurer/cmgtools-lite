@@ -64,6 +64,12 @@ class Fitter(object):
         getattr(self.w,'import')(bernsteinPDF,ROOT.RooFit.Rename(name))
 
 
+    def gaussianSum(self,name,poi,dataset,variable):
+        self.w.factory('scale[1.0,0.5,1.5]')
+        self.w.factory('sigma[10,0,1e+4]')
+        self.w.factory('sigma2[0]')
+        gaussianSum=ROOT.RooGaussianSumPdf(name,name,self.w.var(poi), self.w.var('scale'),self.w.var('sigma'),self.w.var('sigma2'),dataset,variable)
+        getattr(self.w,'import')(gaussianSum,ROOT.RooFit.Rename(name))
 
 
     def mjjParamErfExp(self,name,jsonFile):

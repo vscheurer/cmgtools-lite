@@ -690,13 +690,13 @@ class DataCardMaker:
         pdfName2="_".join([pdf2,self.tag])
         self.w.factory("PROD::{name}({name1},{name2})".format(name=pdfName,name1=pdfName1,name2=pdfName2))
 
-    def addParametricYield(self,name,ID,jsonFile):
+    def addParametricYield(self,name,ID,jsonFile,constant=1.0):
         f=open(jsonFile)
         info=json.load(f)
 
         pdfName="_".join([name,self.tag])
         pdfNorm="_".join([name,self.tag,"norm"])
-        self.w.factory("expr::{name}('({param})*{lumi}',MH,{lumi})".format(name=pdfNorm,param=info['yield'],lumi=self.physics+"_"+self.period+"_lumi"))       
+        self.w.factory("expr::{name}('({param})*{lumi}*{constant}',MH,{lumi})".format(name=pdfNorm,param=info['yield'],lumi=self.physics+"_"+self.period+"_lumi",constant=constant))       
         f.close()
         self.contributions.append({'name':name,'pdf':pdfName,'ID':ID,'yield':1.0})
 
@@ -754,11 +754,11 @@ class DataCardMaker:
         self.contributions.append({'name':name,'pdf':pdfName,'ID':ID,'yield':events})
         self.addSystematic(nuisance,"lnN",{name:1+uncertainty})
 
-    def addFixedYieldFromFile(self,name,ID,filename,histoName):
+    def addFixedYieldFromFile(self,name,ID,filename,histoName,constant=1.0):
         pdfName="_".join([name,self.tag])
         f=ROOT.TFile(filename)
         histogram=f.Get(histoName)
-        events=histogram.Integral()*self.luminosity
+        events=histogram.Integral()*self.luminosity*constant
         self.contributions.append({'name':name,'pdf':pdfName,'ID':ID,'yield':events})
 
 

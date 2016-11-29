@@ -21,8 +21,9 @@ parser.add_option("-b","--binsx",dest="binsx",type=int,help="bins in x",default=
 parser.add_option("-x","--minx",dest="minx",type=float,help="minimum x",default=600)
 parser.add_option("-X","--maxx",dest="maxx",type=float, help="maximum x",default=5000)
 parser.add_option("-V","--vary",dest="vary",help="variablex",default='lnujj_l2_pruned_mass')
-parser.add_option("-l","--lumi",dest="lumi",type=float, help="lumi",default=1)
-parser.add_option("-i","--input",dest="input",help="inputJSON")
+parser.add_option("-l","--lumi",dest="lumi",type=float, help="lumi",default="1")
+parser.add_option("-e","--doExp",dest="doExp",type=int, help="Do exponential",default=0)
+parser.add_option("-j","--json",dest="json", help="InputJSON",default=0)
 
 (options,args) = parser.parse_args()
 
@@ -34,18 +35,79 @@ def returnString(func,options):
             st=st+"+("+str(func.GetParameter(i))+")"+(("*"+varName)*i)
         return st    
     elif func.GetName().find("log")!=-1:
-        return "("+str(func.GetParameter(0))+")+("+str(func.GetParameter(1))+")*log("+varName+")"
+        return str(func.GetParameter(0))+"+("+str(func.GetParameter(1))+")*log("+varName+")"
     else:
         return ""
 
 
 
+def runFits(data,options):
+    jsonFile=open(options.json)
+    info=json.load(jsonFile)
+
+    meanF = ROOT.TFormula("meanF",info['mean'].replace('MH','x'))
+    sigmaF = ROOT.TFormula("sigmaF",info['sigma'].replace('MH','x'))
+    alphaF = ROOT.TFormula("alphaF",info['alpha'].replace('MH','x'))
+    nF = ROOT.TFormula("nF",info['n'].replace('MH','x'))
+    alpha2F = ROOT.TFormula("alpha2F",info['alpha2'].replace('MH','x'))
+    n2F = ROOT.TFormula("n2F",info['n2'].replace('MH','x'))
+    slopeF = ROOT.TFormula("slopeF",info['slope'].replace('MH','x'))
+    fF = ROOT.TFormula("fF",info['f'].replace('MH','x'))
+
+
+
+#    axis=ROOT.TAxis(10,array('d',[600,800,900,1000,1250,1500,2000,2500,3000,3500,4000]))
+    axis=ROOT.TAxis(12,array('d',[600,650,700,750,800,900,1000,1250,1500,2000,2500,3000,3500]))
+
+    graphs={'mean':ROOT.TGraphErrors(),'sigma':ROOT.TGraphErrors(),'alpha':ROOT.TGraphErrors(),'n':ROOT.TGraphErrors(),'alpha2':ROOT.TGraphErrors(),'n2':ROOT.TGraphErrors()}
+
+    for i in range(1,axis.GetNbins()+1):
+    
+        center=axis.GetBinCenter(i)
+        h = data.drawTH1(options.varx,options.cut+"*({vary}>{mini}&&{vary}<{maxi})".format(vary=options.vary,mini=axis.GetBinLowEdge(i),maxi=axis.GetBinUpEdge(i)),str(options.lumi),options.binsx,options.minx,options.maxx) 
+
+        histo=copy.deepcopy(h)
+        fitter=Fitter(['M'])
+        fitter.w.var("M").setVal((options.maxx-options.minx)/2.0)
+        fitter.w.var("M").setMax(options.maxx)
+        fitter.w.var("M").setMin(options.minx)
+
+        fitter.jetResonanceNOEXP('model','M')
+        fitter.w.var("mean").setVal(meanF.Eval(center))
+        fitter.w.var("mean").setMin(meanF.Eval(center)*0.9)
+        fitter.w.var("mean").setMax(meanF.Eval(center)*1.1)
+        fitter.w.var("sigma").setVal(sigmaF.Eval(center))
+        fitter.w.var("sigma").setMin(sigmaF.Eval(center)*0.8)
+        fitter.w.var("sigma").setMax(sigmaF.Eval(center)*1.2)
+        fitter.w.var("alpha").setVal(alphaF.Eval(center))
+        fitter.w.var("alpha").setConstant(1)
+        fitter.w.var("alpha2").setVal(alpha2F.Eval(center))
+        fitter.w.var("alpha2").setConstant(1)
+
+
+
+        fitter.importBinnedData(histo,['M'],'data')   
+        fitter.fit('model','data',[ROOT.RooFit.SumW2Error(1),ROOT.RooFit.Minos(0)])
+        fitter.fit('model','data',[ROOT.RooFit.SumW2Error(1),ROOT.RooFit.Minos(1)])
+        chi=fitter.projection("model","data","M","debugfitMJJTop_"+options.output+"_"+str(i)+".png")
+    
+        for var,graph in graphs.iteritems():
+            value,error=fitter.fetch(var)
+            graph.SetPoint(i-1,center,value)
+            graph.SetPointError(i-1,0.0,error)
+
+    F=ROOT.TFile(options.output+".root","RECREATE")
+    F.cd()
+    for name,graph in graphs.iteritems():
+        graph.Write(name)
+    F.Close()
+
+
+
+#Initialize plotters
+
+
 samples={}
-
-
-
-f=open(options.input)
-info=json.load(f)
 
 
 
@@ -63,75 +125,27 @@ for filename in os.listdir(args[0]):
                 continue
             dataPlotters.append(TreePlotter(args[0]+'/'+fname+'.root','tree'))
             dataPlotters[-1].setupFromFile(args[0]+'/'+fname+'.pck')
-#            dataPlotters[-1].addCorrectionFactor('xsec','tree')
+            dataPlotters[-1].addCorrectionFactor('xsec','tree')
 #            dataPlotters[-1].addCorrectionFactor('genWeight','tree')
             dataPlotters[-1].addCorrectionFactor('puWeight','tree')
     
+sigmas=[]
+for d in dataPlotters:
+    sigmas.append(d.tree.GetMaximum("xsec")/d.weightinv)
+sigmaW=max(sigmas)
+for p in dataPlotters:
+    p.addCorrectionFactor(1.0/sigmaW,'flat')
 
 
 
 data=MergedPlotter(dataPlotters)
 
-h = data.drawTH2(options.vary+':'+options.varx,options.cut,str(options.lumi),options.binsx,options.minx,options.maxx,50,600,5000) 
-histo=copy.deepcopy(h)
-fitter=Fitter(['MH','m'])
-fitter.w.var("m").setVal((options.maxx-options.minx)/2.0)
-fitter.w.var("m").setMax(options.maxx)
-fitter.w.var("m").setMin(options.minx)
-fitter.w.var("MH").setVal(1000)
-fitter.w.var("MH").setMax(5000)
-fitter.w.var("MH").setMin(600)
 
 
 
-fitter.w.factory("mean0[0,-20,20]")        
-fitter.w.factory("mean1[0,-0.002,0.002]")        
-
-fitter.w.factory("expr::meanS('{val}+mean0+mean1&MH',mean0,mean1,MH)".format(val=info['mean']))
-
-fitter.w.factory("sigma0[0,-5,5]")        
-fitter.w.factory("sigma1[0,-0.0005,0.0005]")        
-fitter.w.factory("expr::sigmaS('{val}+sigma0+sigma1*MH',sigma0,sigma1,,MH)".format(val=info['sigma']))
-
-fitter.w.factory("alpha[0,-1,1]")        
-fitter.w.factory("expr::alphaS('{val}+alpha',alpha,MH)".format(val=info['alpha']))
-
-fitter.w.factory("alpha2[0,-1,1]")        
-fitter.w.factory("expr::alpha2S('{val}+alpha2',alpha2,MH)".format(val=info['alpha2']))
-
-fitter.w.factory("expr::n1('{val}',MH)".format(val=info['n']))
-fitter.w.factory("expr::n2('{val}',MH)".format(val=info['n2']))
 
 
-peak = ROOT.RooDoubleCB('model','modelS',fitter.w.var("m"),fitter.w.function('meanS'),fitter.w.function('sigmaS'),fitter.w.function('alphaS'),fitter.w.function('n1'),fitter.w.function("alpha2S"),fitter.w.function("n2"))
-getattr(fitter.w,'import')(peak,ROOT.RooFit.Rename('model'))
-fitter.importBinnedData(histo,['m','MH'],'data')   
-fitter.fit('model','data',[ROOT.RooFit.SumW2Error(0),ROOT.RooFit.ConditionalObservables(ROOT.RooArgSet(fitter.w.var("MH")))])
-#chi=fitter.projectionCond("model","data","m","MH","debugfitMJJTop_"+options.output+".png")
-    
-
-
-m0,cErr=fitter.fetch('mean0')
-m1,cErr=fitter.fetch('mean1')
-info['mean']="("+info['mean']+"+("+str(m0)+"+("+str(m1)+")*MH))"
-
-m0,cErr=fitter.fetch('sigma0')
-m1,cErr=fitter.fetch('sigma1')
-info['sigma']="("+info['sigma']+"+("+str(m0)+"+("+str(m1)+")*MH))"
-
-
-for var in ['alpha','alpha2']:
-
-    c,cErr=fitter.fetch(var)
-    info[var]="("+info[var]+"+("+str(c)+"))"
-
-f=open(options.output+".json","w")
-json.dump(info,f)
-f.close()
-#return graphs
-
-
-
+graphs=runFits(data,options)
     
     
     

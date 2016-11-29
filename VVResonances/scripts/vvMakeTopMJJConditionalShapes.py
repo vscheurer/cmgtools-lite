@@ -22,6 +22,7 @@ parser.add_option("-x","--minx",dest="minx",type=float,help="minimum x",default=
 parser.add_option("-X","--maxx",dest="maxx",type=float, help="maximum x",default=5000)
 parser.add_option("-V","--vary",dest="vary",help="variablex",default='lnujj_l2_pruned_mass')
 parser.add_option("-l","--lumi",dest="lumi",type=float, help="lumi",default="1")
+parser.add_option("-e","--doExp",dest="doExp",type=int, help="Do exponential",default=0)
 
 (options,args) = parser.parse_args()
 
@@ -41,7 +42,7 @@ def returnString(func,options):
 
 def runFits(data,options):
 #    axis=ROOT.TAxis(10,array('d',[600,800,900,1000,1250,1500,2000,2500,3000,3500,4000]))
-    axis=ROOT.TAxis(8,array('d',[600,700,800,900,1000,1250,1500,2000,2500]))
+    axis=ROOT.TAxis(12,array('d',[600,650,700,750,800,900,1000,1250,1500,2000,2500,3000,3500]))
 
     graphs={'mean':ROOT.TGraphErrors(),'sigma':ROOT.TGraphErrors(),'alpha':ROOT.TGraphErrors(),'n':ROOT.TGraphErrors(),'alpha2':ROOT.TGraphErrors(),'n2':ROOT.TGraphErrors()}
 
@@ -56,12 +57,23 @@ def runFits(data,options):
         fitter.w.var("M").setMax(options.maxx)
         fitter.w.var("M").setMin(options.minx)
 
+        if options.doExp:
+            fitter.jetResonanceNOEXP('model','M')
+            fitter.w.var("alpha").setVal(1.48)
+            fitter.w.var("alpha").setConstant(1)
+            fitter.w.var("alpha2").setVal(1.07)
+            fitter.w.var("alpha2").setConstant(1)
 
-        fitter.jetResonanceNOEXP('model','M')
-        fitter.w.var("alpha").setVal(1.5)
-        fitter.w.var("alpha").setConstant(1)
-#        fitter.w.var("alpha2").setVal(1)
-#        fitter.w.var("alpha2").setConstant(1)
+#            fitter.jetResonance('model','M')
+
+        else:
+            fitter.jetResonanceNOEXP('model','M')
+
+            fitter.w.var("alpha").setVal(1.48)
+            fitter.w.var("alpha").setConstant(1)
+            fitter.w.var("alpha2").setVal(1.07)
+            fitter.w.var("alpha2").setConstant(1)
+
 
         fitter.importBinnedData(histo,['M'],'data')   
         fitter.fit('model','data',[ROOT.RooFit.SumW2Error(1),ROOT.RooFit.Minos(0)])
