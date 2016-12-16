@@ -14,15 +14,11 @@ parser = optparse.OptionParser()
 parser.add_option("-o","--output",dest="output",help="Output",default='')
 parser.add_option("-s","--samples",dest="samples",default='',help="Type of sample")
 parser.add_option("-c","--cut",dest="cut",help="Cut to apply for yield in gen sample",default='')
-parser.add_option("-C","--genCut",dest="genCut",help="Cut to apply for yield",default='')
 parser.add_option("-d","--isData",dest="data",type=int,help="isData",default=1)
-parser.add_option("-v","--var",dest="var",help="variable for gen",default='')
-parser.add_option("-V","--condVar",dest="condVar",help="variable for gen",default='')
-parser.add_option("-b","--bins",dest="bins",type=int,help="bins",default=20)
-parser.add_option("-B","--condBins",dest="condBins",help="conditional bins split by comma",default='')
-parser.add_option("-m","--min",dest="mini",type=float,help="minimum ",default=0.0)
-parser.add_option("-M","--max",dest="maxi",type=float,help="maximum ",default=0.0)
-parser.add_option("-g","--genVar",dest="genvar",help="variable for gen",default='')
+parser.add_option("-v","--vars",dest="vars",help="variable for gen",default='')
+parser.add_option("-b","--binsx",dest="binsx",help="bins",default='')
+parser.add_option("-B","--binsy",dest="binsy",help="conditional bins split by comma",default='')
+parser.add_option("-g","--genVars",dest="genVars",help="variable for gen",default='')
 
 
 
@@ -83,39 +79,63 @@ if options.data==2:
 data=MergedPlotter(dataPlotters)
 
 
-cBinsStr=options.condBins.split(',')
-cBins=[]
-for b in cBinsStr:
-    cBins.append(float(b))
 
-axis = ROOT.TAxis(len(cBins)-1,array('d',cBins))
+binsxStr=options.binsx.split(',')
+binsx=[]
+for b in binsxStr:
+    binsx.append(float(b))
 
-graph={'scale':ROOT.TGraphErrors(),'sigma':ROOT.TGraphErrors()}
+binsyStr=options.binsy.split(',')
+binsy=[]
+for b in binsyStr:
+    binsy.append(float(b))
+    
 
-#dataset = data.makeDataSet(options.genvar,options.genCut,-1)
-
-
-for i in range(1,axis.GetNbins()+1):
-    cBinLo = axis.GetBinLowEdge(i)
-    cBinHi = axis.GetBinUpEdge(i)
-    cBinCenter = axis.GetBinCenter(i)
-    dataset = data.makeDataSet(options.genvar,options.genCut+'*({cvar}>{lo}&&{cvar}<={hi})'.format(cvar=options.condVar,lo=cBinLo-100,hi=cBinHi+100),-1)
-    histo=data.drawTH1(options.var,options.cut+'*({cvar}>{lo}&&{cvar}<={hi})'.format(cvar=options.condVar,lo=cBinLo,hi=cBinHi),"1",options.bins,options.mini,options.maxi)
-    fitter=Fitter([options.var])
-    fitter.importBinnedData(histo,[options.var],'data')
-    fitter.gaussianSum('model',options.var,dataset,options.genvar)
-    fitter.fit('model','data',[ROOT.RooFit.SumW2Error(1)])
-    chi=fitter.projection("model","data",options.var,"debugPlot_"+str(i)+"_"+options.output,'x')
-    print i,'Chi2',chi
-    for nuis in ['scale','sigma']:
-        v,vErr=fitter.fetch(nuis)
-        graph[nuis].SetPoint(i,cBinCenter,v)
-        graph[nuis].SetPointError(i,0,vErr)
+binsz=[]
+for b in range(0,101):
+    binsz.append(0.5+b/100.0)
 
 
+scalexHisto=ROOT.TH1F("scalexHisto","scaleHisto",len(binsx)-1,array('d',binsx))
+resxHisto=ROOT.TH1F("resxHisto","resHisto",len(binsx)-1,array('d',binsx))
 
-f2=ROOT.TFile(options.output,"RECREATE")
-f2.cd()
-for g in graph.keys():
-    graph[g].Write(g)
-f2.Close()
+scaleyHisto=ROOT.TH1F("scaleyHisto","scaleHisto",len(binsy)-1,array('d',binsy))
+resyHisto=ROOT.TH1F("resyHisto","resHisto",len(binsy)-1,array('d',binsy))
+
+variables=options.vars.split(',')
+genVariables=options.genVars.split(',')
+
+
+gaussian=ROOT.TF1("gaussian","gaus",0.5,1.5)
+
+
+f=ROOT.TFile(options.output,"RECREATE")
+f.cd()
+
+
+superHX=data.drawTH2Binned(variables[0]+'/'+genVariables[0]+':'+variables[0],options.cut,"1",binsx,binsz)
+superHY=data.drawTH2Binned(variables[1]+'/'+genVariables[1]+':'+variables[1],options.cut,"1",binsy,binsz)
+
+for i in range(1,superHX.GetNbinsX()+1):
+    tmp=superHX.ProjectionY("q",i,i)
+    scalexHisto.SetBinContent(i,tmp.GetMean())
+    scalexHisto.SetBinError(i,tmp.GetMeanError())
+    resxHisto.SetBinContent(i,tmp.GetRMS())
+    resxHisto.SetBinError(i,tmp.GetRMSError())
+
+for i in range(1,superHY.GetNbinsX()+1):
+    tmp=superHY.ProjectionY("q",i,i)
+    scaleyHisto.SetBinContent(i,tmp.GetMean())
+    scaleyHisto.SetBinError(i,tmp.GetMeanError())
+    resyHisto.SetBinContent(i,tmp.GetRMS())
+    resyHisto.SetBinError(i,tmp.GetRMSError())
+
+        
+        
+scalexHisto.Write()
+scaleyHisto.Write()
+resxHisto.Write()
+resyHisto.Write()
+superHX.Write("dataX")
+superHY.Write("dataY")
+f.Close()    

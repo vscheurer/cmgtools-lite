@@ -60,12 +60,12 @@ def runFits(data,options):
         fitter.w.var("M").setVal((options.maxx-options.minx)/2.0)
         fitter.w.var("M").setMax(options.maxx)
         fitter.w.var("M").setMin(options.minx)
-        fitter.erfpow('model','M')
+        fitter.erfpow2('model','M')
 
         fitter.importBinnedData(histo,['M'],'data')   
         fitter.fit('model','data',[ROOT.RooFit.SumW2Error(1),ROOT.RooFit.Minos(1)])
 
-#        chi=fitter.projection("model","data","M","debugfitMVV_"+options.output+"_pass1_"+str(i)+".png")
+        chi=fitter.projection("model","data","M","debugfitMVV_"+options.output+"_pass1_"+str(i)+".root")
     
         for j,g in enumerate(graphs):
             c,cerr=fitter.fetch("c_"+str(j))
@@ -92,7 +92,7 @@ def runFits(data,options):
         fitter.importBinnedData(histo,['M'],'data')   
         fitter.fit('model','data',[ROOT.RooFit.SumW2Error(1),ROOT.RooFit.Minos(1)])
 
-#        chi=fitter.projection("model","data","M","debugfitMVV_"+options.output+"_pass2_"+str(i)+".png")
+        chi=fitter.projection("model","data","M","debugfitMVV_"+options.output+"_pass2_"+str(i)+".root")
     
         for j,g in enumerate(graphs):
             if j>0:
@@ -127,7 +127,7 @@ def runFits(data,options):
         fitter.w.var("c_2").setConstant(1)
         fitter.importBinnedData(histo,['M'],'data')   
         fitter.fit('model','data',[ROOT.RooFit.SumW2Error(1),ROOT.RooFit.Minos(1)])
-#        chi=fitter.projection("model","data","M","debugfitMVV_"+options.output+"_pass3_"+str(i)+".png")
+        chi=fitter.projection("model","data","M","debugfitMVV_"+options.output+"_pass3_"+str(i)+".root")
 
     
         for j,g in enumerate(graphs):
@@ -167,7 +167,7 @@ def runFits(data,options):
         fitter.w.var("c_2").setConstant(1)
         fitter.importBinnedData(histo,['M'],'data')   
 
-        chi=fitter.projection("model","data","M","debugfitMVV_"+options.output+"_pass3_"+str(i)+".png")
+        chi=fitter.projection("model","data","M","debugfitMVV_"+options.output+"_final_"+str(i)+".root")
 
 
     #create json

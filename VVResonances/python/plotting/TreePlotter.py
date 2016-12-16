@@ -127,6 +127,26 @@ class TreePlotter(PlotterBase):
 
         return h
 
+
+    def drawTH3Binned(self,var,cuts,lumi,binningx,binningy,binningz,titlex = "",unitsx = "",titley="",unitsy="",titlez="",unitsz="", drawStyle = "COLZ"):
+        h = ROOT.TH3D("tmpTH3","",len(binningx)-1,array('f',binningx),len(binningy)-1,array('f',binningy),len(binningz)-1,array('f',binningz))
+        h.Sumw2()
+        h.SetFillStyle(self.fillstyle)
+        h.SetFillColor(self.fillcolor)
+        h.GetXaxis().SetTitle(titlex+ " ["+unitsx+"]")
+        h.GetYaxis().SetTitle(titley+ " ["+unitsy+"]")
+        h.GetZaxis().SetTitle(titlez+ " ["+unitsz+"]")
+
+        #Apply correction factors
+        corrString='1'
+        for corr in self.corrFactors:
+                corrString = corrString+"*"+str(corr['value']) 
+        self.tree.Draw(var+">>tmpTH3","("+cuts+")*"+lumi+"*"+self.weight+"*("+corrString+")","goff")
+
+        return h
+    
+
+    
     def drawTH1Binned(self,var,cuts,lumi,binningx,titlex = "",unitsx = "", drawStyle = "COLZ"):
         h = ROOT.TH1D("tmpTH1","",len(binningx)-1,array('f',binningx))
         h.Sumw2()
@@ -236,6 +256,9 @@ class TreePlotter(PlotterBase):
                     weight=weight*c['value']
                 if c['model']=='tree':
                     weight=weight*getattr(event,c['value'])
+                if c['model']=='branch':
+                    weight=weight*getattr(event,c['value'])[0]
+
             for v in variables:
                 argset2.find(v).setVal(getattr(event,v)[0])
             data.add(argset2,weight)

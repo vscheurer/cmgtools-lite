@@ -65,8 +65,8 @@ class Fitter(object):
 
 
     def gaussianSum(self,name,poi,dataset,variable):
-        self.w.factory('scale[1.0,0.5,1.5]')
-        self.w.factory('sigma[10,0,1e+4]')
+        self.w.factory('scale[1.0,0.1,2]')
+        self.w.factory('sigma[30,5,1e+4]')
         self.w.factory('sigma2[0]')
         gaussianSum=ROOT.RooGaussianSumPdf(name,name,self.w.var(poi), self.w.var('scale'),self.w.var('sigma'),self.w.var('sigma2'),dataset,variable)
         getattr(self.w,'import')(gaussianSum,ROOT.RooFit.Rename(name))
@@ -792,9 +792,9 @@ class Fitter(object):
 
 
     def erfpow2(self,name = 'model',poi='x'):      
-        self.w.factory("c_0[0,-20,0]")
-        self.w.factory("c_1[0,-20,0]")
-        self.w.factory("c_2[800,-10000,10000]")
+        self.w.factory("c_0[10,0,200]")
+        self.w.factory("c_1[10,-200,200]")
+        self.w.factory("c_2[800,400,10000]")
         self.w.factory("c_3[1000,-10000,10000]")      
         erfexp = ROOT.RooErfPow2Pdf(name,name,self.w.var(poi),self.w.var("c_0"),self.w.var("c_1"),self.w.var("c_2"),self.w.var("c_3"))
         getattr(self.w,'import')(erfexp,ROOT.RooFit.Rename(name))
