@@ -1,5 +1,6 @@
 <use name="root"/>
 <use name="rootcore"/>
+<use name="roofit"/>
 <use name="rootinteractive"/>
 <use name="rootpy"/>
 <use name="clhepheader"/>

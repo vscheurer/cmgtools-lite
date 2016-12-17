@@ -49,8 +49,8 @@ dataTemplate="SingleMuon,SingleElectron,MET"
 resWTemplate="TTJets.,WWTo1L1Nu2Q"
 resWMJJTemplate="TTJets.,WWTo1L1Nu2Q"
 resZTemplate="WZTo1L1Nu2Q"
-nonResTemplate="WJetsToLNu_HT,TTJets.,DYJetsToLL_M50_HT"
-#nonResTemplate="TTJets."
+nonResTemplate="WJetsToLNu_HT,TTJets,DYJetsToLL_M50_HT"
+
 
 
 minMJJ=30.0
@@ -65,7 +65,7 @@ binsMVV=100
 
 
 cuts['acceptance']= "(lnujj_LV_mass>{minMVV}&&lnujj_LV_mass<{maxMVV}&&lnujj_l2_softDrop_mass>{minMJJ}&&lnujj_l2_softDrop_mass<{maxMJJ})".format(minMVV=minMVV,maxMVV=maxMVV,minMJJ=minMJJ,maxMJJ=maxMJJ)
-cuts['acceptanceGEN']= "(lnujj_l2_gen_softDrop_mass>{minMJJ}&&lnujj_l2_gen_softDrop_mass<{maxMJJ}&&lnujj_gen_partialMass>{minMVV}&&lnujj_gen_partialMass<{maxMVV})".format(minMJJ=minMJJ-5,maxMJJ=maxMJJ+5,minMVV=minMVV-50,maxMVV=maxMVV+50)                
+cuts['acceptanceGEN']= "(lnujj_l2_gen_softDrop_mass>{minMJJ}&&lnujj_l2_gen_softDrop_mass<{maxMJJ}&&lnujj_gen_partialMass>{minMVV}&&lnujj_gen_partialMass<{maxMVV})".format(minMJJ=20,maxMJJ=250,minMVV=400,maxMVV=5000)                
 #cuts['acceptanceGEN']= "(lnujj_l2_gen_softDrop_mass>0&&lnujj_gen_partialMass>0)"
 
 cuts['acceptanceGENMVV']= "(lnujj_gen_partialMass>{minMVV}&&lnujj_gen_partialMass<{maxMVV})".format(minMVV=minMVV,maxMVV=maxMVV)
@@ -136,13 +136,13 @@ def makeBackgroundShapes2D(name,filename,template,addCut=""):
                 pur=['HP','LP']
             for p in pur:
                 if addCut=='':
-#                    cut='*'.join([cuts['common'],cuts[l],cuts[p],cuts[c],cuts['acceptance'],cuts['acceptanceGEN']])
-                    cut='*'.join([cuts['common'],cuts[l],cuts[p],cuts[c],cuts['acceptance']])
+                    cut='*'.join([cuts['common'],cuts[l],cuts[p],cuts[c],cuts['acceptance'],cuts['acceptanceGEN']])
+#                    cut='*'.join([cuts['common'],cuts[l],cuts[p],cuts[c],cuts['acceptanceGEN']])
                 else:
-                    cut='*'.join([cuts['common'],cuts[l],cuts[p],cuts[c],addCut,cuts['acceptance']])
-#                    cut='*'.join([cuts['common'],cuts[l],cuts[p],cuts[c],addCut,cuts['acceptanceGEN'],cuts['acceptance']])
-                    rootFile=filename+"_"+name+"_2D_"+l+"_"+p+"_"+c+".root"            
-                    cmd='vvMake2DTemplateWithKernelsFast.py  -o "{rootFile}" -s "{samples}" -c "{cut}"  -v "lnujj_gen_partialMass,lnujj_l2_gen_softDrop_mass" -d 2 -b {binsMVV} -B {binsMJJ} -x {minMVV} -X {maxMVV} -y {minMJJ} -Y {maxMJJ}  -r {res} samples'.format(rootFile=rootFile,samples=template,cut=cut,binsMVV=binsMVV,minMVV=minMVV,maxMVV=maxMVV,res=resFile,binsMJJ=binsMJJ,minMJJ=minMJJ,maxMJJ=maxMJJ)
+#                    cut='*'.join([cuts['common'],cuts[l],cuts[p],cuts[c],addCut,cuts['acceptanceGEN']])
+                    cut='*'.join([cuts['common'],cuts[l],cuts[p],cuts[c],addCut,cuts['acceptanceGEN'],cuts['acceptance']])
+                rootFile=filename+"_"+name+"_2D_"+l+"_"+p+"_"+c+".root"            
+                cmd='vvMake2DTemplateWithKernels.py  -o "{rootFile}" -s "{samples}" -c "{cut}"  -v "lnujj_gen_partialMass,lnujj_l2_gen_softDrop_mass" -d 2 -b {binsMVV} -B {binsMJJ} -x {minMVV} -X {maxMVV} -y {minMJJ} -Y {maxMJJ}  -r {res} samples'.format(rootFile=rootFile,samples=template,cut=cut,binsMVV=binsMVV,minMVV=minMVV,maxMVV=maxMVV,res=resFile,binsMJJ=binsMJJ,minMJJ=minMJJ,maxMJJ=maxMJJ)
     os.system(cmd)
                 
 

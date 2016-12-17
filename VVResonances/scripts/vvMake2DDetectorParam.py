@@ -96,11 +96,11 @@ for b in range(0,101):
     binsz.append(0.5+b/100.0)
 
 
-scalexHisto=ROOT.TH1F("scalexHisto","scaleHisto",len(binsx)-1,array('d',binsx))
-resxHisto=ROOT.TH1F("resxHisto","resHisto",len(binsx)-1,array('d',binsx))
+scalexHisto=ROOT.TH2F("scalexHisto","scaleHisto",len(binsx)-1,array('d',binsx),len(binsy)-1,array('d',binsy))
+resxHisto=ROOT.TH2F("resxHisto","resHisto",len(binsx)-1,array('d',binsx),len(binsy)-1,array('d',binsy))
 
-scaleyHisto=ROOT.TH1F("scaleyHisto","scaleHisto",len(binsy)-1,array('d',binsy))
-resyHisto=ROOT.TH1F("resyHisto","resHisto",len(binsy)-1,array('d',binsy))
+scaleyHisto=ROOT.TH2F("scaleyHisto","scaleHisto",len(binsx)-1,array('d',binsx),len(binsy)-1,array('d',binsy))
+resyHisto=ROOT.TH2F("resyHisto","resHisto",len(binsx)-1,array('d',binsx),len(binsy)-1,array('d',binsy))
 
 variables=options.vars.split(',')
 genVariables=options.genVars.split(',')
@@ -113,22 +113,24 @@ f=ROOT.TFile(options.output,"RECREATE")
 f.cd()
 
 
-superHX=data.drawTH2Binned(variables[0]+'/'+genVariables[0]+':'+variables[0],options.cut,"1",binsx,binsz)
-superHY=data.drawTH2Binned(variables[1]+'/'+genVariables[1]+':'+variables[1],options.cut,"1",binsy,binsz)
+superHX=data.drawTH3Binned(variables[0]+'/'+genVariables[0]+':'+variables[1]+':'+variables[0],options.cut,"1",binsx,binsy,binsz)
+superHY=data.drawTH3Binned(variables[1]+'/'+genVariables[1]+':'+variables[1]+':'+variables[0],options.cut,"1",binsx,binsy,binsz)
 
 for i in range(1,superHX.GetNbinsX()+1):
-    tmp=superHX.ProjectionY("q",i,i)
-    scalexHisto.SetBinContent(i,tmp.GetMean())
-    scalexHisto.SetBinError(i,tmp.GetMeanError())
-    resxHisto.SetBinContent(i,tmp.GetRMS())
-    resxHisto.SetBinError(i,tmp.GetRMSError())
+    for j in range(1,superHX.GetNbinsY()+1):
+        bin=scalexHisto.GetBin(i,j)
 
-for i in range(1,superHY.GetNbinsX()+1):
-    tmp=superHY.ProjectionY("q",i,i)
-    scaleyHisto.SetBinContent(i,tmp.GetMean())
-    scaleyHisto.SetBinError(i,tmp.GetMeanError())
-    resyHisto.SetBinContent(i,tmp.GetRMS())
-    resyHisto.SetBinError(i,tmp.GetRMSError())
+        tmp=superHX.ProjectionZ("q",i,i,j,j)
+        scalexHisto.SetBinContent(bin,tmp.GetMean())
+        scalexHisto.SetBinError(bin,tmp.GetMeanError())
+        resxHisto.SetBinContent(bin,tmp.GetRMS())
+        resxHisto.SetBinError(bin,tmp.GetRMSError())
+
+        tmp=superHY.ProjectionZ("q",i,i,j,j)
+        scaleyHisto.SetBinContent(bin,tmp.GetMean())
+        scaleyHisto.SetBinError(bin,tmp.GetMeanError())
+        resyHisto.SetBinContent(bin,tmp.GetRMS())
+        resyHisto.SetBinError(bin,tmp.GetRMSError())
 
         
         

@@ -9,7 +9,7 @@ from CMGTools.VVResonances.plotting.tdrstyle import *
 setTDRStyle()
 from CMGTools.VVResonances.plotting.TreePlotter import TreePlotter
 from CMGTools.VVResonances.plotting.MergedPlotter import MergedPlotter
-
+ROOT.gSystem.Load("libCMGToolsVVResonances")
 parser = optparse.OptionParser()
 parser.add_option("-o","--output",dest="output",help="Output",default='')
 parser.add_option("-r","--res",dest="res",help="res",default='')
@@ -147,12 +147,12 @@ histogram_qg1_down=ROOT.TH2F("histo_CMS_VV_LNuJ_QGFraction1Down","histo",options
 
 histograms=[
     histogram,
-    histogram_isr_up,
-    histogram_isr_down,
-    histogram_qg0_up,
-    histogram_qg0_down,
-    histogram_qg1_up,
-    histogram_qg1_down,
+#    histogram_isr_up,
+#    histogram_isr_down,
+#    histogram_qg0_up,
+#    histogram_qg0_down,
+#    histogram_qg1_up,
+#    histogram_qg1_down,
 ]
 
 
@@ -174,112 +174,15 @@ syst_ry1=0.1*0.1*(30)
 #ok lets populate!
 
 
-#histogramGEN=data.drawTH3('lnujj_l2_gen_pt:'+variables[1]+':'+variables[0],options.cut,'1',2*options.binsx,options.minx-200,options.maxx+200,2*options.binsy,options.miny-20,options.maxy+20,50,0,2500)
 
 
-
-dataset=data.makeDataSet('lnujj_l2_gen_pt,'+variables[1]+','+variables[0],options.cut,-1)
-print 'dataset has ',dataset.numEntries(),'entries'
-entries=dataset.numEntries()
-
-
-w=ROOT.RooWorkspace("w","w")
-#w.factory("x[{mini},{maxi}]".format(mini=options.minx,maxi=options.maxx))
-#w.factory("y[{mini},{maxi}]".format(mini=options.miny,maxi=options.maxy))
-w.factory("x[-5000,5000]".format(mini=options.minx,maxi=options.maxx))
-w.factory("y[-500,500]".format(mini=options.miny,maxi=options.maxy))
-
-w.factory("mux[0,5000]")
-w.factory("muy[0,5000]")
-w.factory("sigmax[0,5000]")
-w.factory("sigmay[0,5000]")
-w.factory("RooGaussian::gausx(x,mux,sigmax)")
-w.factory("RooGaussian::gausy(y,muy,sigmay)")
-w.factory("PROD::kernel(gausx,gausy)")
-w.var("x").setRange("whole",-5000,5000)
-w.var("y").setRange("whole",-500,500)
-
-w.var("x").setRange("inside",options.minx,options.maxx)
-w.var("y").setRange("inside",options.miny,options.maxy)
-
-
-
-for N in range(0,dataset.numEntries()):
-    line=dataset.get(N)
-    if N % 1000==0:
-        print 'processed',N ,'out of' ,entries
-             
-
-    genx=line.getRealValue(variables[0])
-    geny=line.getRealValue(variables[1])
-    genpt=line.getRealValue('lnujj_l2_gen_pt')
-    weight=dataset.weight()
-#    if weight<=0:
-#        print 'skipped negative weight'
-#        continue
-
-    sx=scale_x.Interpolate(genx)
-    sy=scale_y.Interpolate(geny)
-    rx=res_x.Interpolate(genx)
-    ry=res_y.Interpolate(geny)
-
-    meanx0=sx*genx
-    meany0=sy*geny
-    sigmax0=rx*genx
-    sigmay0=ry*geny
-            
-    weight_isr_up=ptUp.Interpolate(genpt)
-    weight_isr_down=ptDown.Interpolate(genpt)
-    weight_qg0_up=qg0_up.Interpolate(genpt)
-    weight_qg0_down=qg0_down.Interpolate(genpt)
-    weight_qg1_up=qg1_up.Interpolate(genpt)
-    weight_qg1_down=qg0_down.Interpolate(genpt)
-
-
-    w.var("mux").setVal(genx)
-    w.var("muy").setVal(geny)
-    w.var("sigmax").setVal(sigmax0)
-    w.var("sigmay").setVal(sigmay0)
-
-    integralWhole=w.pdf("kernel").createIntegral(ROOT.RooArgSet(w.var("x"),w.var("y")),ROOT.RooFit.Range("whole")).getVal()
-    integralIn=w.pdf("kernel").createIntegral(ROOT.RooArgSet(w.var("x"),w.var("y")),ROOT.RooFit.Range("inside")).getVal()
-    w.var("x").setMin(options.minx)
-    w.var("x").setMax(options.maxx)
-    w.var("y").setMin(options.miny)
-    w.var("y").setMax(options.maxy)
-        
-    h=w.pdf("kernel").createHistogram("x,y",options.binsx,options.binsy)
-    w.var("x").setMin(-5000.0)
-    w.var("x").setMax(5000.0)
-    w.var("y").setMin(-500.0)
-    w.var("y").setMax(500.0)
-    
-
-    if h.Integral()<=0:
-        print 'Problematic',genx,geny,sigmax0,sigmay0,weight 
-        h.Delete()    
-        continue
-    h.Scale(integralIn/integralWhole)
-    histogram.Add(h,weight)
-    histogram_isr_up.Add(h,weight_isr_up)
-    histogram_isr_down.Add(h,weight_isr_down)
-    histogram_qg0_up.Add(h,weight_qg0_up)
-    histogram_qg0_down.Add(h,weight_qg0_down)
-    histogram_qg1_up.Add(h,weight_qg1_up)
-    histogram_qg1_down.Add(h,weight_qg1_down)
-
-
-    h.Delete()
-
-
+for plotter in dataPlotters:
+    dataset=plotter.makeDataSet('lnujj_l2_gen_pt,'+variables[1]+','+variables[0],options.cut,-1)
+    datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],scale_x,scale_y,res_x,res_y,histogram);
 
 f=ROOT.TFile(options.output,"RECREATE")
 f.cd()
     
-#get the X
-for hist in histograms:
-    proj=hist.ProjectionY('y_'+hist.GetName())
-    proj.Write()
 
 #Smooth the x!
 expo=ROOT.TF1("expo","expo",1500,8000)
@@ -290,8 +193,15 @@ for hist in histograms:
         proj.Fit(expo,"","",2000,8000)
         for j in range(1,hist.GetNbinsX()+1):
             x=hist.GetXaxis().GetBinCenter(j)
-            if x>3000:
+            if x>2500:
                 hist.SetBinContent(j,i,expo.Eval(x))
+
+#get the X
+for hist in histograms:
+    proj=hist.ProjectionY('y_'+hist.GetName())
+    proj.Write()
+
+
 
 #conditional x
 for hist in histograms:
