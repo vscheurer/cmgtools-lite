@@ -7,7 +7,7 @@ class GaussianSumTemplateMaker {
  public:
   GaussianSumTemplateMaker();
   ~GaussianSumTemplateMaker();
-  GaussianSumTemplateMaker(const RooDataSet*,const char*, const char*,TH2*,TH2*,TH2*,TH2*,TH2*);
+  GaussianSumTemplateMaker(const RooDataSet*,const char*, const char*,const char*, TH1*,TH1*,TH1*,TH1*,TH2*);
 
 
  private:

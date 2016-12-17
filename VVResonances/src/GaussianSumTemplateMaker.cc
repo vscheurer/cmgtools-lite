@@ -5,9 +5,9 @@ using namespace cmg;
 GaussianSumTemplateMaker::GaussianSumTemplateMaker() {}
 GaussianSumTemplateMaker::~GaussianSumTemplateMaker() {}
 
-GaussianSumTemplateMaker::GaussianSumTemplateMaker(const RooDataSet* dataset, const char* varx, const char* vary,TH2* hscalex,TH2* hscaley,TH2* hresx,TH2* hresy,TH2* output) {
+GaussianSumTemplateMaker::GaussianSumTemplateMaker(const RooDataSet* dataset, const char* varx, const char* vary,const char* varpt,TH1* hscalex,TH1* hscaley,TH1* hresx,TH1* hresy,TH2* output) {
 
-  double genx,geny,x,y,scalex,scaley,resx,resy;
+  double genx,geny,x,y,scalex,scaley,resx,resy,genpt;
   genx=0.0;
   geny=0.0;
   scalex=0.0;
@@ -16,6 +16,7 @@ GaussianSumTemplateMaker::GaussianSumTemplateMaker(const RooDataSet* dataset, co
   y=0.0;
   resx=0.0;
   resy=0.0;
+  genpt=0.0;
   
 
   int bin=0;
@@ -29,11 +30,12 @@ GaussianSumTemplateMaker::GaussianSumTemplateMaker(const RooDataSet* dataset, co
     const RooArgSet *line  = dataset->get(entry);
     genx=line->getRealValue(varx);
     geny=line->getRealValue(vary);
+    genpt=line->getRealValue(varpt);
    
-    scalex=hscalex->Interpolate(genx,geny)*genx;
-    scaley=hscaley->Interpolate(genx,geny)*geny;
-    resx=hresx->Interpolate(genx,geny)*genx;
-    resy=hresy->Interpolate(genx,geny)*geny;
+    scalex=hscalex->Interpolate(genpt)*genx;
+    scaley=hscaley->Interpolate(genpt)*geny;
+    resx=hresx->Interpolate(genpt)*genx;
+    resy=hresy->Interpolate(genpt)*geny;
     for (int i=1;i<output->GetNbinsX()+1;++i) {
       x=output->GetXaxis()->GetBinCenter(i);
       for (int j=1;j<output->GetNbinsY()+1;++j) {
