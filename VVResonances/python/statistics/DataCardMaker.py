@@ -232,9 +232,12 @@ class DataCardMaker:
         coeffList=ROOT.RooArgList()
         pdfList=ROOT.RooArgList(self.w.pdf(pdfName))
 
-        for syst in systematics:
-            self.w.factory(syst+"[-1,1]")
-            coeffList.add(self.w.var(syst))
+        for systval in systematics:
+            splitted=systval.split(':')
+            systName=splitted[1]
+            syst=splitted[0]
+            self.w.factory(systName+"[-1,1]")
+            coeffList.add(self.w.var(systName))
 
             for variation in ["Up","Down"]:
                 histo=FR.Get(histoname+"_"+syst+variation)

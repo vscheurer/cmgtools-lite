@@ -5,9 +5,9 @@ using namespace cmg;
 GaussianSumTemplateMaker::GaussianSumTemplateMaker() {}
 GaussianSumTemplateMaker::~GaussianSumTemplateMaker() {}
 
-GaussianSumTemplateMaker::GaussianSumTemplateMaker(const RooDataSet* dataset, const char* varx, const char* vary,const char* varpt,TH1* hscalex,TH1* hscaley,TH1* hresx,TH1* hresy,TH2* output) {
+GaussianSumTemplateMaker::GaussianSumTemplateMaker(const RooDataSet* dataset, const char* varx, const char* vary,const char* varpt,TH1* hscalex,TH1* hscaley,TH1* hresx,TH1* hresy,TH2* output,const char* varw,TH1* weightH) {
 
-  double genx,geny,x,y,scalex,scaley,resx,resy,genpt;
+  double genx,geny,x,y,scalex,scaley,resx,resy,genpt,reweight,genw;
   genx=0.0;
   geny=0.0;
   scalex=0.0;
@@ -17,9 +17,12 @@ GaussianSumTemplateMaker::GaussianSumTemplateMaker(const RooDataSet* dataset, co
   resx=0.0;
   resy=0.0;
   genpt=0.0;
+  reweight=1.0;
+  genw=0.0;
   
 
-  int bin=0;
+  //  int bin=0;
+  int binw=0;
   unsigned int nevents = dataset->numEntries();
   for (unsigned int entry=0;entry<nevents;++entry) {
 
@@ -31,7 +34,14 @@ GaussianSumTemplateMaker::GaussianSumTemplateMaker(const RooDataSet* dataset, co
     genx=line->getRealValue(varx);
     geny=line->getRealValue(vary);
     genpt=line->getRealValue(varpt);
+    if (weightH!=0) {
+      genw=line->getRealValue(varw);
+      binw=weightH->GetXaxis()->FindBin(genw);
+      reweight=weightH->GetBinContent(binw);
+    }
+      
    
+
     scalex=hscalex->Interpolate(genpt)*genx;
     scaley=hscaley->Interpolate(genpt)*geny;
     resx=hresx->Interpolate(genpt)*genx;
@@ -40,8 +50,8 @@ GaussianSumTemplateMaker::GaussianSumTemplateMaker(const RooDataSet* dataset, co
       x=output->GetXaxis()->GetBinCenter(i);
       for (int j=1;j<output->GetNbinsY()+1;++j) {
 	y=output->GetYaxis()->GetBinCenter(j);
-	bin=output->GetBin(i,j);
-	output->SetBinContent(bin,output->GetBinContent(bin)+dataset->weight()*gaus2D(x,y,scalex,scaley,resx,resy));
+	//	bin=output->GetBin(i,j);
+	output->Fill(x,y,reweight*dataset->weight()*gaus2D(x,y,scalex,scaley,resx,resy));
       }
     }
 
@@ -55,5 +65,5 @@ GaussianSumTemplateMaker::GaussianSumTemplateMaker(const RooDataSet* dataset, co
 
 
 double GaussianSumTemplateMaker::gaus2D(double x, double y,double genx,double geny,double resx,double resy) {
-  return exp(-0.5*(x-genx)*(x-genx)/(resx*resx)-0.5*(y-geny)*(y-geny)/(resy*resy))/(2.5066*sqrt(resx*resx+resy*resy));
+  return exp(-0.5*(x-genx)*(x-genx)/(resx*resx)-0.5*(y-geny)*(y-geny)/(resy*resy))/(2.5066*resx*resy);
 } 

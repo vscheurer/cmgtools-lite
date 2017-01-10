@@ -5,6 +5,7 @@ from CMGTools.VVResonances.statistics.Fitter import Fitter
 from math import log,exp,sqrt
 import os, sys, re, optparse,pickle,shutil,json
 import json
+import copy
 from CMGTools.VVResonances.plotting.tdrstyle import *
 setTDRStyle()
 from CMGTools.VVResonances.plotting.TreePlotter import TreePlotter
@@ -24,6 +25,77 @@ parser.add_option("-y","--miny",dest="miny",type=float,help="bins",default=0)
 parser.add_option("-Y","--maxy",dest="maxy",type=float,help="conditional bins split by comma",default=1)
 
 
+def mirror(histo,histoNominal,name):
+    newHisto =copy.deepcopy(histoNominal) 
+    newHisto.SetName(name)
+    intNominal=histoNominal.Integral()
+    intUp = histo.Integral()
+    for i in range(1,histo.GetNbinsX()+1):
+        for j in range(1,histo.GetNbinsY()+1):
+            up=histo.GetBinContent(i,j)/intUp
+            nominal=histoNominal.GetBinContent(i,j)/intNominal
+            newHisto.SetBinContent(i,j,nominal*nominal/up)
+    return newHisto        
+
+def expandHisto(histo,options):
+    histogram=ROOT.TH2F(histo.GetName(),"histo",options.binsx,options.minx,options.maxx,options.binsy,options.miny,options.maxy)
+    for i in range(1,histo.GetNbinsX()+1):
+        proje = histo.ProjectionY("q",i,i)
+        graph=ROOT.TGraph(proje)
+        for j in range(1,histogram.GetNbinsY()+1):
+            x=histogram.GetYaxis().GetBinCenter(j)
+            bin=histogram.GetBin(i,j)
+            histogram.SetBinContent(bin,graph.Eval(x,0,"S"))
+    return histogram
+        
+
+
+def conditional(hist):
+    for i in range(1,hist.GetNbinsY()+1):
+        proj=hist.ProjectionX("q",i,i)
+        integral=proj.Integral()
+        for j in range(1,hist.GetNbinsX()+1):
+            hist.SetBinContent(j,i,hist.GetBinContent(j,i)/integral)
+
+def smoothTailOLD(hist):
+    expo=ROOT.TF1("expo","expo",1000,8000)
+#    expo=ROOT.TF1("expo","[0]*(1-pow(x/13000.,[1]))/pow(x/13000.0,[2]+0.0*TMath::Log(x/13000.0))",1000,8000)
+#    expo.SetParameters(1,1,1)
+#    expo.SetParLimits(0,0,1e+20)
+#    expo.SetParLimits(1,0,100)
+#    expo.SetParLimits(2,0,100)
+
+    for i in range(1,hist.GetNbinsY()+1):
+        proj=hist.ProjectionX("q",i,i)
+        for j in range(1,proj.GetNbinsX()+1):
+            if proj.GetBinContent(j)/proj.Integral()<0.0005:
+                proj.SetBinError(j,1.8)
+        proj.Fit(expo,"","",1700,8000)
+        proj.Fit(expo,"","",1700,8000)
+        for j in range(1,hist.GetNbinsX()+1):
+            x=hist.GetXaxis().GetBinCenter(j)
+            if x>2000:
+                hist.SetBinContent(j,i,expo.Eval(x))
+
+
+
+def smoothTail(hist,bini=39):
+    expo=ROOT.TF1("expo","expo",1000,8000)
+    proje = hist.ProjectionX("proje")
+    NBINSX=hist.GetNbinsX()
+    proje.Fit(expo,"","",2500,8000)
+    
+    for i in range(1,proje.GetNbinsX()+1):
+        x=proje.GetXaxis().GetBinCenter(i)
+        if x>2500:
+            proje.SetBinContent(i,expo.Eval(x))
+
+    for i in range(1,hist.GetNbinsY()+1):
+        proj=hist.ProjectionX("q",i,i)
+        proje.Scale(proj.Integral(bini,NBINSX)/proje.Integral(bini,NBINSX))
+
+        for j in range(bini,hist.GetNbinsX()+1):
+            hist.SetBinContent(j,i,proje.GetBinContent(j))
 
 
 
@@ -33,10 +105,9 @@ parser.add_option("-Y","--maxy",dest="maxy",type=float,help="conditional bins sp
 random=ROOT.TRandom3(101082)
 
 
-
-
 sampleTypes=options.samples.split(',')
 dataPlotters=[]
+dataPlottersNW=[]
 
 for filename in os.listdir(args[0]):
     for sampleType in sampleTypes:
@@ -50,11 +121,19 @@ for filename in os.listdir(args[0]):
             dataPlotters[-1].setupFromFile(args[0]+'/'+fname+'.pck')
             dataPlotters[-1].addCorrectionFactor('xsec','tree')
             dataPlotters[-1].addCorrectionFactor('genWeight','tree')
-#                if filename.find("TTJets."):
-#                    dataPlotters[-1].addCorrectionFactor('6383.9077','flat')
             dataPlotters[-1].addCorrectionFactor('puWeight','tree')
             dataPlotters[-1].addCorrectionFactor('lnujj_sf','branch')
             dataPlotters[-1].addCorrectionFactor('lnujj_btagWeight','branch')
+            dataPlotters[-1].filename = fname
+
+
+            dataPlottersNW.append(TreePlotter(args[0]+'/'+fname+'.root','tree'))
+            dataPlottersNW[-1].addCorrectionFactor('puWeight','tree')
+            dataPlottersNW[-1].addCorrectionFactor('lnujj_sf','branch')
+            dataPlottersNW[-1].addCorrectionFactor('lnujj_btagWeight','branch')
+            dataPlottersNW[-1].filename = fname
+
+
 #if options.data==2:
 #    sigmas=[]
 #    for d in dataPlotters:
@@ -75,155 +154,343 @@ res_y=fcorr.Get("resyHisto")
 variables=options.vars.split(',')
 
 
-ptBins=[0,50,100,150,200,250,300,350,400,450,500,550,600,700,800,900,1000,1500,2000,5000]
+ptBins=[0,150,200,250,300,350,400,450,500,550,600,700,800,900,1000,1500,2000,5000]
+binsx=[]
+for i in range(0,options.binsx+1):
+    binsx.append(options.minx+i*(options.maxx-options.minx)/options.binsx)
+
+binsy=[25.,38.,50.,60.,70.,80.,90.,100.,120.,140.,160.,190.,237.]    
+
+
+
+###Make res up and down
+resUp = ROOT.TH1F(res_x)
+resUp.SetName("resUp")
+for i in range(1,res_x.GetNbinsX()+1):
+    resUp.SetBinContent(i,res_x.GetBinContent(i)+0.3)
+
+
+scaleUp = ROOT.TH1F(scale_x)
+scaleUp.SetName("scaleUp")
+scaleDown = ROOT.TH1F(scale_x)
+scaleDown.SetName("scaleDown")
+for i in range(1,scale_x.GetNbinsX()+1):
+    scaleUp.SetBinContent(i,scale_x.GetBinContent(i)+0.3)
+    scaleDown.SetBinContent(i,scale_x.GetBinContent(i)-0.3)
+
+
+
+#scaleUpLog = ROOT.TH1F(scale_x)
+#scaleUpLog.SetName("scaleUpLog")
+#scaleDownLog = ROOT.TH1F(scale_x)
+#scaleDownLog.SetName("scaleDownLog")
+#for i in range(1,scale_x.GetNbinsX()+1):
+#    x=scale_x.GetXaxis().GetBinCenter(i)
+#    scaleUpLog.SetBinContent(i,scale_x.GetBinContent(i)*(1+0.05*log(x)))
+#    scaleDownLog.SetBinContent(i,scale_x.GetBinContent(i)*(1-0.05*log(x)))
+
+
+
+ptBins=[200,300,400,500,600,700,800,1000,1500,2000,3000,5000]
 
 ###Make pt spectrum
-#ptNominal=data.drawTH1Binned("lnujj_l2_gen_pt",options.cut,'1',ptBins)
-#ptUp=data.drawTH1Binned("1.3*lnujj_l2_gen_pt",options.cut,'1',ptBins)
-#ptDown=data.drawTH1Binned("0.7*lnujj_l2_gen_pt",options.cut,'1',ptBins)
+#print 'Making W Pt spectra for reweighting'
+#wptNominal=data.drawTH1Binned("lnujj_l1_pt","lnujj_LV_mass>600",'1',ptBins)
+#wptUp=data.drawTH1Binned("1.3*lnujj_l1_pt","lnujj_LV_mass>600",'1',ptBins)
+#wptDown=data.drawTH1Binned("0.7*lnujj_l1_pt","lnujj_LV_mass>600&&(0.7*lnujj_l1_pt)>200",'1',ptBins)
+#wptNominal.Scale(1.0/wptNominal.Integral())
+#wptUp.Scale(1.0/wptUp.Integral())
+#wptDown.Scale(1.0/wptDown.Integral())
+#wptUp.Divide(wptNominal)
+#wptDown.Divide(wptNominal)
+
+#print 'Making  Pt spectra for reweighting'
+#ptNominal=data.drawTH1Binned("lnujj_l2_gen_pt","lnujj_LV_mass>600",'1',ptBins)
+#ptUp=data.drawTH1Binned("1.3*lnujj_l2_gen_pt","lnujj_LV_mass>600",'1',ptBins)
+#ptDown=data.drawTH1Binned("0.7*lnujj_l2_gen_pt","lnujj_LV_mass>600&&(0.7*lnujj_l2_gen_pt)>100",'1',ptBins)
+#ptNominal.Scale(1.0/ptNominal.Integral())
+#ptUp.Scale(1.0/ptUp.Integral())
+#ptDown.Scale(1.0/ptDown.Integral())
 #ptUp.Divide(ptNominal)
 #ptDown.Divide(ptNominal)
 
 
-#make qg
-#quarks=data.drawTH1Binned("lnujj_l2_gen_pt",options.cut+"*(lnujj_l2_partonFlavour<21)",'1',ptBins)
-#gluons=data.drawTH1Binned("lnujj_l2_gen_pt",options.cut+"*(lnujj_l2_partonFlavour==21)",'1',ptBins)
-#both=data.drawTH1Binned("lnujj_l2_gen_pt",options.cut,'1',ptBins)
-#quarkFraction=data.drawTH1Binned("lnujj_l2_gen_pt",options.cut+"*(lnujj_l2_partonFlavour<21)",'1',ptBins)
-#quarkFraction.Divide(both)
 
-#quarks.Scale(1.0/quarks.Integral())
-#gluons.Scale(1.0/gluons.Integral())
-
-#qg_nominal=data.drawTH1Binned("lnujj_l2_gen_pt",options.cut+"*(lnujj_l2_partonFlavour<21)",'1',ptBins)
-#qg0_up=data.drawTH1Binned("lnujj_l2_gen_pt",options.cut+"*(lnujj_l2_partonFlavour<21)",'1',ptBins)
-#qg0_down=data.drawTH1Binned("lnujj_l2_gen_pt",options.cut+"*(lnujj_l2_partonFlavour==21)",'1',ptBins)
-
-#qg1_up=data.drawTH1Binned("lnujj_l2_gen_pt",options.cut+"*(lnujj_l2_partonFlavour<21)",'1',ptBins)
-#qg1_down=data.drawTH1Binned("lnujj_l2_gen_pt",options.cut+"*(lnujj_l2_partonFlavour==21)",'1',ptBins)
-
-
-
-#syst_frac0=0.05
-#syst_frac1=0.05/2000.
-
-
-#for  i in range(1,ptNominal.GetNbinsX()+1):#
-#    frac = quarkFraction.GetBinContent(i)
-#    qg_nominal.SetBinContent(i, frac*quarks.GetBinContent(i)+(1-frac)*gluons.GetBinContent(i))
-
-#    frac = quarkFraction.GetBinContent(i)*(1+3*syst_frac0)
-#    qg0_up.SetBinContent(i, frac*quarks.GetBinContent(i)+(1-frac)*gluons.GetBinContent(i))
-#    frac = quarkFraction.GetBinContent(i)*(1-3*syst_frac0)
-#    qg0_down.SetBinContent(i, frac*quarks.GetBinContent(i)+(1-frac)*gluons.GetBinContent(i))
-
-#    x=ptNominal.GetXaxis().GetBinCenter(i)
-#    frac = quarkFraction.GetBinContent(i)*(1+3*syst_frac1*x)
-#    qg1_up.SetBinContent(i, frac*quarks.GetBinContent(i)+(1-frac)*gluons.GetBinContent(i))
-#    frac = quarkFraction.GetBinContent(i)*(1-3*syst_frac1*x)
-#    qg1_down.SetBinContent(i, frac*quarks.GetBinContent(i)+(1-frac)*gluons.GetBinContent(i))
-    
-#qg0_up.Divide(qg_nominal)
-#qg0_down.Divide(qg_nominal)
-
-#qg1_up.Divide(qg_nominal)
-#qg1_down.Divide(qg_nominal)
+#print 'Making quark gluon spectra for reweighting'
+#partonFlavour=data.drawTH1Binned("lnujj_l2_partonFlavour",options.cut,'1',[0.,20.,22])
+#quarkGluonUp=data.drawTH1Binned("lnujj_l2_partonFlavour",options.cut,'1',[0.,20.,22])
+#quarkGluonDown=data.drawTH1Binned("lnujj_l2_partonFlavour",options.cut,'1',[0.,20.,22])
+#partonFlavour.Scale(1.0/partonFlavour.Integral())
+#quarkGluonUp.Scale(1.0/quarkGluonUp.Integral())
+#quarkGluonDown.Scale(1.0/quarkGluonDown.Integral())
+#quarks=partonFlavour.GetBinContent(1)
+#offset=1
+#quarkGluonUp.SetBinContent(1,quarkGluonUp.GetBinContent(1)*(1+offset))
+#quarkGluonUp.SetBinContent(2,1-quarkGluonUp.GetBinContent(1))
+#offset=-1
+#quarkGluonDown.SetBinContent(1,quarkGluonDown.GetBinContent(1)*(1+offset))
+#quarkGluonDown.SetBinContent(2,1-quarkGluonDown.GetBinContent(1))
+#quarkGluonUp.Divide(partonFlavour)
+#quarkGluonDown.Divide(partonFlavour)
+#
+#print 'Making Tail spectra for reweighting'
+#tailSyst=0.0012
+#tailUp=ROOT.TH1F("tailUp","tailUp",100,400,10000)
+#tailDown=ROOT.TH1F("tailDown","tailDown",100,400,10000)
+#for i in range(1,tailUp.GetNbinsX()+1):
+#    x=tailUp.GetXaxis().GetBinCenter(i)
+#    if x<2500:
+#        tailUp.SetBinContent(i,1.0)
+#        tailDown.SetBinContent(i,1.0)
+#    else:
+#        tailUp.SetBinContent(i,exp(tailSyst*(x-2500)))
+#        tailDown.SetBinContent(i,1/tailUp.GetBinContent(i))
 
 
 
-histogram=ROOT.TH2F("histo","histo",options.binsx,options.minx,options.maxx,options.binsy,options.miny,options.maxy)
 
 
+histogram=ROOT.TH2F("histo","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+histogram_top_up=ROOT.TH2F("histo_TOPUp","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+histogram_top_down=ROOT.TH2F("histo_TOPDown","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+
+histogram_pt_up=ROOT.TH2F("histo_PTUp","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+histogram_pt_down=ROOT.TH2F("histo_PTDown","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+#histogram_wpt_up=ROOT.TH2F("histo_WPTUp","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+#histogram_wpt_down=ROOT.TH2F("histo_WPTDown","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+
+histogram_scale_up=ROOT.TH2F("histo_ScaleUp","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+histogram_scale_down=ROOT.TH2F("histo_ScaleDown","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+#histogram_scaleLog_up=ROOT.TH2F("histo_ScaleLogUp","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+#histogram_scaleLog_down=ROOT.TH2F("histo_ScaleLogDown","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+
+histogram_res_up=ROOT.TH2F("histo_ResUp","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+#histogram_res_down=ROOT.TH2F("histo_ResDown","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+
+#histogram_qg_up=ROOT.TH2F("histo_GluonUp","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+#histogram_qg_down=ROOT.TH2F("histo_GluonDown","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+#histogram_tail_up=ROOT.TH2F("histo_TailUp","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+#histogram_tail_down=ROOT.TH2F("histo_TailDown","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
 
 #systs
 
-#histogram_isr_up=ROOT.TH2F("histo_CMS_VV_LNuJ_ISRUp","histo",options.binsx,options.minx,options.maxx,options.binsy,options.miny,options.maxy)
-#histogram_isr_down=ROOT.TH2F("histo_CMS_VV_LNuJ_ISRDown","histo",options.binsx,options.minx,options.maxx,options.binsy,options.miny,options.maxy)
-
-#histogram_qg0_up=ROOT.TH2F("histo_CMS_VV_LNuJ_QGFraction0Up","histo",options.binsx,options.minx,options.maxx,options.binsy,options.miny,options.maxy)
-#histogram_qg0_down=ROOT.TH2F("histo_CMS_VV_LNuJ_QGFraction0Down","histo",options.binsx,options.minx,options.maxx,options.binsy,options.miny,options.maxy)#
-
-#histogram_qg1_up=ROOT.TH2F("histo_CMS_VV_LNuJ_QGFraction1Up","histo",options.binsx,options.minx,options.maxx,options.binsy,options.miny,options.maxy)
-#histogram_qg1_down=ROOT.TH2F("histo_CMS_VV_LNuJ_QGFraction1Down","histo",options.binsx,options.minx,options.maxx,options.binsy,options.miny,options.maxy)
-
-
 histograms=[
     histogram,
-#    histogram_isr_up,
-#    histogram_isr_down,
-#    histogram_qg0_up,
-#    histogram_qg0_down,
-#    histogram_qg1_up,
-#    histogram_qg1_down,
+#    histogram_pt_up,
+#    histogram_pt_down,
+    histogram_top_up,
+    histogram_top_down,
+    histogram_scale_up,
+    histogram_scale_down,
+#    histogram_scaleLog_up,
+#    histogram_scaleLog_down,
+    histogram_res_up,
+#    histogram_res_down,
+#    histogram_qg_up,
+#    histogram_qg_down,
+#    histogram_tail_up,
+#    histogram_tail_down,
 ]
-
-
-
-
-
-syst_sx0=0.05
-syst_sx1=20.
-syst_sy0=0.05
-syst_sy1=1.0/100.
-
-
-syst_rx0=0.1*0.1
-syst_rx1=0.1*0.1*(600)
-syst_ry0=0.15*0.15
-syst_ry1=0.1*0.1*(30)
-
 
 #ok lets populate!
 
 
 
 
-for plotter in dataPlotters:
-    dataset=plotter.makeDataSet('lnujj_l2_gen_pt,'+variables[1]+','+variables[0],options.cut,-1)
-    datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'lnujj_l2_gen_pt',scale_x,scale_y,res_x,res_y,histogram);
+for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
+    histI=plotter.drawTH1(variables[0],options.cut,"1",1,0,1000000000)
+    norm=histI.Integral()
+
+
+    #nominal
+    histTMP=ROOT.TH2F("histoTMP","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+    dataset=plotterNW.makeDataSet('lnujj_l1_pt,lnujj_l2_partonFlavour,lnujj_l2_gen_pt,'+variables[1]+','+variables[0],options.cut,-1)
+    datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'lnujj_l2_gen_pt',scale_x,scale_y,res_x,res_y,histTMP);
+    if histTMP.Integral()>0:
+        histTMP.Scale(histI.Integral()/histTMP.Integral())
+        histogram.Add(histTMP)
+
+        #TOP UP/DOWN
+        if "TT" in plotterNW.filename:
+            histogram_top_up.Add(histTMP,2.0)
+            histogram_top_down.Add(histTMP,0.5)
+        else:
+            histogram_top_up.Add(histTMP)
+            histogram_top_down.Add(histTMP)
+
+    histTMP.Delete()
+
+
+
+
+    #remove the factor you added:
+
+
+
+
+    #pt up
+#    histTMP=ROOT.TH2F("histoTMP","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+#    datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'lnujj_l2_gen_pt',scale_x,scale_y,res_x,res_y,histTMP,"lnujj_l2_gen_pt",ptUp);
+#    if histTMP.Integral()>0:
+#        histTMP.Scale(histI.Integral()/histTMP.Integral())
+#        histogram_pt_up.Add(histTMP)
+#    histTMP.Delete()
+
+
+    #pt down
+#    histTMP=ROOT.TH2F("histoTMP","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+#    datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'lnujj_l2_gen_pt',scale_x,scale_y,res_x,res_y,histTMP,"lnujj_l2_gen_pt",ptDown);
+#    if histTMP.Integral()>0:
+#        histTMP.Scale(histI.Integral()/histTMP.Integral())
+#        histogram_pt_down.Add(histTMP)
+#    histTMP.Delete()
+
+
+    #W pt up
+#    histTMP=ROOT.TH2F("histoTMP","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+#    datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'lnujj_l2_gen_pt',scale_x,scale_y,res_x,res_y,histTMP,"lnujj_l1_pt",wptUp);
+#    if histTMP.Integral()>0:
+#        histTMP.Scale(histI.Integral()/histTMP.Integral())
+#        histogram_wpt_up.Add(histTMP)
+#    histTMP.Delete()
+
+    #W pt down
+#    histTMP=ROOT.TH2F("histoTMP","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+#    datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'lnujj_l2_gen_pt',scale_x,scale_y,res_x,res_y,histTMP,"lnujj_l1_pt",wptDown);
+#    if histTMP.Integral()>0:
+#        histTMP.Scale(histI.Integral()/histTMP.Integral())
+#        histogram_wpt_down.Add(histTMP)
+#    histTMP.Delete()
+
+
+
+    #scale up
+    histTMP=ROOT.TH2F("histoTMP","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+    datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'lnujj_l2_gen_pt',scaleUp,scale_y,res_x,res_y,histTMP);
+    if histTMP.Integral()>0:
+        histTMP.Scale(histI.Integral()/histTMP.Integral())
+        histogram_scale_up.Add(histTMP)
+    histTMP.Delete()
+
+    #scale down
+    histTMP=ROOT.TH2F("histoTMP","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+    datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'lnujj_l2_gen_pt',scaleDown,scale_y,res_x,res_y,histTMP);
+    if histTMP.Integral()>0:
+        histTMP.Scale(histI.Integral()/histTMP.Integral())
+        histogram_scale_down.Add(histTMP)
+    histTMP.Delete()
+
+
+    #scale up log
+#    histTMP=ROOT.TH2F("histoTMP","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+#    datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'lnujj_l2_gen_pt',scaleUpLog,scale_y,res_x,res_y,histTMP);
+#    if histTMP.Integral()>0:
+#        histTMP.Scale(histI.Integral()/histTMP.Integral())
+#        histogram_scaleLog_up.Add(histTMP)
+#    histTMP.Delete()
+
+    #scale down log
+#    histTMP=ROOT.TH2F("histoTMP","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+#    datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'lnujj_l2_gen_pt',scaleDownLog,scale_y,res_x,res_y,histTMP);
+#    if histTMP.Integral()>0:
+#        histTMP.Scale(histI.Integral()/histTMP.Integral())
+#        histogram_scaleLog_down.Add(histTMP)
+#    histTMP.Delete()
+
+
+    #res up
+    histTMP=ROOT.TH2F("histoTMP","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+    datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'lnujj_l2_gen_pt',scale_x,scale_y,resUp,res_y,histTMP);
+    if histTMP.Integral()>0:
+        histTMP.Scale(histI.Integral()/histTMP.Integral())
+        histogram_res_up.Add(histTMP)
+    histTMP.Delete()
+
+    #res down
+#    histTMP=ROOT.TH2F("histoTMP","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+#    datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'lnujj_l2_gen_pt',scale_x,scale_y,resDown,res_y,histTMP);
+#    if histTMP.Integral()>0:
+#        histTMP.Scale(histI.Integral()/histTMP.Integral())
+#        histogram_res_down.Add(histTMP)
+#    histTMP.Delete()
+
+    #gluon up
+#    histTMP=ROOT.TH2F("histoTMP","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+#    datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'lnujj_l2_gen_pt',scale_x,scale_y,res_x,res_y,histTMP,"lnujj_l2_partonFlavour",quarkGluonUp);
+#    if histTMP.Integral()>0:
+#        histTMP.Scale(histI.Integral()/histTMP.Integral())
+#        histogram_qg_up.Add(histTMP)
+#    histTMP.Delete()
+
+
+    #gluon down
+#    histTMP=ROOT.TH2F("histoTMP","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+#    datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'lnujj_l2_gen_pt',scale_x,scale_y,res_x,res_y,histTMP,"lnujj_l2_partonFlavour",quarkGluonDown);
+#    if histTMP.Integral()>0:
+#        histTMP.Scale(histI.Integral()/histTMP.Integral())
+#        histogram_qg_down.Add(histTMP)
+#    histTMP.Delete()
+
+    #tail up
+#    histTMP=ROOT.TH2F("histoTMP","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+#    datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'lnujj_l2_gen_pt',scale_x,scale_y,res_x,res_y,histTMP,variables[0],tailUp);
+#    if histTMP.Integral()>0:
+#        histTMP.Scale(histI.Integral()/histTMP.Integral())
+#        histogram_tail_up.Add(histTMP)   
+#    histTMP.Delete()
+
+    #tail down
+#    histTMP=ROOT.TH2F("histoTMP","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+#    datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'lnujj_l2_gen_pt',scale_x,scale_y,res_x,res_y,histTMP,variables[0],tailDown);
+#    if histTMP.Integral()>0:
+#        histTMP.Scale(histI.Integral()/histTMP.Integral())
+#        histogram_tail_down.Add(histTMP)
+#    histTMP.Delete()
+
+
+    histI.Delete()
+
+
+
+
 
 f=ROOT.TFile(options.output,"RECREATE")
 f.cd()
-    
 
-#Smooth the x!
-expo=ROOT.TF1("expo","expo",1500,8000)
-
-#for hist in histograms:
-#    for i in range(1,hist.GetNbinsY()+1):
-#        proj=hist.ProjectionX("q",i,i)
-#        proj.Fit(expo,"","",2000,8000)
-#        for j in range(1,hist.GetNbinsX()+1):
-#            x=hist.GetXaxis().GetBinCenter(j)
-#            if x>2500:
-#                hist.SetBinContent(j,i,expo.Eval(x))
-
-#get the X
+finalHistograms={}
 for hist in histograms:
-    proj=hist.ProjectionY('y_'+hist.GetName())
-    proj.Write()
+    hist.Write(hist.GetName()+"_coarse")
+    #smooth
+    smoothTail(hist)
+    conditional(hist)
+    expanded=expandHisto(hist,options)
+    conditional(expanded)
+    expanded.Write()
+    finalHistograms[hist.GetName()]=expanded
+
+##special treatment for mirroring
+histogram_res_down=mirror(finalHistograms['histo_ResUp'],finalHistograms['histo'],"histo_ResDown")
+conditional(histogram_res_down)
+histogram_res_down.Write()
 
 
 
-#conditional x
-#for hist in histograms:
-#    for i in range(1,hist.GetNbinsY()+1):
-#        proj=hist.ProjectionX("q",i,i)
-#        integral=proj.Integral()
-#        for j in range(1,hist.GetNbinsX()+1):
-#            hist.SetBinContent(j,i,hist.GetBinContent(j,i)/integral)
-            
 
-for hist in histograms:
-    hist.Write('x_'+hist.GetName())
+#ptUp.Write("ptUp")
+#ptDown.Write("ptDown")
+#wptUp.Write("wptUp")
+#wptDown.Write("wptDown")
 
-#ptUp.Write('isr_up')
-#ptDown.Write('isr_down')
-#qg0_up.Write('qg0_up')
-#qg0_down.Write('qg0_down')
-#qg1_up.Write('qg1_up')
-#qg1_down.Write('qg1_down')
-#quarkFraction.Write('qg')
+scaleUp.Write("scaleUp")
+scaleDown.Write("scaleDown")
+resUp.Write("resUp")
+
+#resDown.Write("resDown")
+
+#quarkGluonUp.Write("qgUp")
+#quarkGluonDown.Write("qgDwn")
+#tailUp.Write("tailUp")
+#tailDown.Write("tailDown")
 
 f.Close()
 
