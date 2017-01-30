@@ -126,7 +126,7 @@ for filename in os.listdir(args[0]):
             dataPlotters.append(TreePlotter(args[0]+'/'+fname+'.root','tree'))
             dataPlotters[-1].setupFromFile(args[0]+'/'+fname+'.pck')
             dataPlotters[-1].addCorrectionFactor('xsec','tree')
-#            dataPlotters[-1].addCorrectionFactor('genWeight','tree')
+            dataPlotters[-1].addCorrectionFactor('genWeight','tree')
             dataPlotters[-1].addCorrectionFactor('puWeight','tree')
     
 sigmas=[]

@@ -33,6 +33,9 @@ graphStr= options.graphs.split(',')
 parameterization={}
 
 
+
+ff=ROOT.TFile("debug_"+options.output+".root","RECREATE")
+ff.cd()
 for string in graphStr:
     comps =string.split(':')      
     graph=rootFile.Get(comps[0])
@@ -44,8 +47,10 @@ for string in graphStr:
     
     graph.Fit(func,"","",options.min,options.max)
     parameterization[comps[0]]=returnString(func)
+    graph.Write(comps[0])
+    func.Write(comps[0]+"_func")
 
-
+ff.Close()
 f=open(options.output,"w")
 json.dump(parameterization,f)
 f.close()
