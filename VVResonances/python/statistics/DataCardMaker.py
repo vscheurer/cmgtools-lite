@@ -132,7 +132,7 @@ class DataCardMaker:
         self.w.factory("expr::{name}('MH*0+{param}',MH)".format(name=SLOPEVar,param=info['slope']).replace("MH",varToReplace))
 
         FVar="_".join(["f",name,self.tag])
-        self.w.factory("expr::{name}('MH*0+{param}',MH)".format(name=FVar,param=info['f']).replace("MH",varToReplace))
+        self.w.factory("expr::{name}('min(MH*0+{param},1)',MH)".format(name=FVar,param=info['f']).replace("MH",varToReplace))
 
         pdfName2="_".join([name+"bkg",self.tag])
         
@@ -143,6 +143,96 @@ class DataCardMaker:
 
         f.close()
 
+
+
+
+    def addMJJTopMergedParametricShape(self,name,variable,jsonFile,scale ={},resolution={},fraction={},varToReplace="MH"):
+        self.w.factory("MH[2000]")
+        self.w.var("MH").setConstant(1)
+       
+        scaleStr='0'
+        resolutionStr='0'
+        fractionStr='0'
+
+        scaleSysts=[]
+        resolutionSysts=[]
+        fractionSysts=[]
+        for syst,factor in scale.iteritems():
+            self.w.factory(syst+"[0,-0.1,0.1]")
+            scaleStr=scaleStr+"+{factor}*{syst}".format(factor=factor,syst=syst)
+            scaleSysts.append(syst)
+        for syst,factor in resolution.iteritems():
+            self.w.factory(syst+"[0,-0.5,0.5]")
+            resolutionStr=resolutionStr+"+{factor}*{syst}".format(factor=factor,syst=syst)
+            resolutionSysts.append(syst)
+        for syst,factor in fraction.iteritems():
+            self.w.factory(syst+"[0,-50,50]")
+            fractionStr=fractionStr+"+{factor}*{syst}".format(factor=factor,syst=syst)
+            fractionSysts.append(syst)
+       
+        MJJ=variable            
+        self.w.factory(variable+"[0,1000]")
+
+        
+        f=open(jsonFile)
+        info=json.load(f)
+
+        MEANWVar="_".join(["meanW",name,self.tag])
+        self.w.factory("expr::{name}('({param})*(1+{vv_syst})',MH,{vv_systs})".format(name=MEANWVar,param=info['meanW'],vv_syst=scaleStr,vv_systs=','.join(scaleSysts)).replace("MH",varToReplace))
+
+        MEANTOPVar="_".join(["meanTop",name,self.tag])
+        self.w.factory("expr::{name}('({param})*(1+{vv_syst})',MH,{vv_systs})".format(name=MEANTOPVar,param=info['meanTop'],vv_syst=scaleStr,vv_systs=','.join(scaleSysts)).replace("MH",varToReplace))
+
+        SIGMAWVar="_".join(["sigmaW",name,self.tag])
+        self.w.factory("expr::{name}('({param})*(1+{vv_syst})',MH,{vv_systs})".format(name=SIGMAWVar,param=info['sigmaW'],vv_syst=resolutionStr,vv_systs=','.join(resolutionSysts)).replace("MH",varToReplace))
+
+        SIGMATOPVar="_".join(["sigmaTop",name,self.tag])
+        self.w.factory("expr::{name}('({param})*(1+{vv_syst})',MH,{vv_systs})".format(name=SIGMATOPVar,param=info['sigmaTop'],vv_syst=resolutionStr,vv_systs=','.join(resolutionSysts)).replace("MH",varToReplace))
+
+        ALPHAWVar="_".join(["alphaW",name,self.tag])
+        self.w.factory("expr::{name}('MH*0+{param}',MH)".format(name=ALPHAWVar,param=info['alphaW']).replace("MH",varToReplace))
+
+        ALPHAWVar2="_".join(["alphaW2",name,self.tag])
+        self.w.factory("expr::{name}('MH*0+{param}',MH)".format(name=ALPHAWVar2,param=info['alphaW2']).replace("MH",varToReplace))
+
+        ALPHATOPVar="_".join(["alphaTop",name,self.tag])
+        self.w.factory("expr::{name}('MH*0+{param}',MH)".format(name=ALPHATOPVar,param=info['alphaTop']).replace("MH",varToReplace))
+
+        ALPHATOPVar2="_".join(["alphaTop2",name,self.tag])
+        self.w.factory("expr::{name}('MH*0+{param}',MH)".format(name=ALPHATOPVar2,param=info['alphaTop2']).replace("MH",varToReplace))
+
+        NVar="_".join(["n",name,self.tag])
+        self.w.factory("expr::{name}('MH*0+{param}',MH)".format(name=NVar,param=info['n']).replace("MH",varToReplace))
+
+
+        FVar="_".join(["f",name,self.tag])
+        self.w.factory("expr::{name}('min((MH*0+{param})*(1+{vv_syst}),1.0)',MH,{vv_systs})".format(name=FVar,param=info['f'],vv_syst=fractionStr,vv_systs=','.join(fractionSysts)).replace("MH",varToReplace))
+
+
+        pdfNameW="_".join([name+"PeakW",self.tag])
+        vvMass = ROOT.RooDoubleCB(pdfNameW,pdfNameW,self.w.var(MJJ),self.w.function(MEANWVar),self.w.function(SIGMAWVar),self.w.function(ALPHAWVar),self.w.function(NVar),self.w.function(ALPHAWVar2),self.w.function(NVar))
+        getattr(self.w,'import')(vvMass,ROOT.RooFit.Rename(pdfNameW))
+
+        pdfNameTop="_".join([name+"PeakTop",self.tag])
+        vvMass2 = ROOT.RooDoubleCB(pdfNameTop,pdfNameTop,self.w.var(MJJ),self.w.function(MEANTOPVar),self.w.function(SIGMATOPVar),self.w.function(ALPHATOPVar),self.w.function(NVar),self.w.function(ALPHATOPVar2),self.w.function(NVar))
+        getattr(self.w,'import')(vvMass2,ROOT.RooFit.Rename(pdfNameTop))
+
+        pdfNamePeak="_".join([name+"Peak",self.tag])
+        self.w.factory("SUM::{name}({f}*{PDF1},{PDF2})".format(name=pdfNamePeak,f=FVar,PDF1=pdfNameW,PDF2=pdfNameTop))
+
+
+        SLOPEVar="_".join(["slope",name,self.tag])
+        self.w.factory("expr::{name}('MH*0+{param}',MH)".format(name=SLOPEVar,param=info['slope']).replace("MH",varToReplace))
+
+        pdfNameBKG="_".join([name+"bkg",self.tag])
+        self.w.factory("RooExponential::{name}({var},{SLOPE})".format(name=pdfNameBKG,var=MJJ,SLOPE=SLOPEVar).replace("MH",varToReplace))
+
+        FVar2="_".join(["f2",name,self.tag])
+        self.w.factory("expr::{name}('MH*0+{param}',MH)".format(name=FVar2,param=info['f2']).replace("MH",varToReplace))
+
+        pdfName="_".join([name,self.tag])
+        self.w.factory("SUM::{name}({f}*{PDF1},{PDF2})".format(name=pdfName,f=FVar2,PDF1=pdfNamePeak,PDF2=pdfNameBKG))
+        f.close()
 
 
 

@@ -11,48 +11,47 @@ ROOT.gSystem.Load("libHiggsAnalysisCombinedLimit")
 
 
 plotter=RooPlotter("combined.root")    
-plotter.fix("MH",1850)
-plotter.fix("r",0.0)
+plotter.fix("MH",4000)
+#plotter.fix("r",0.0)
 plotter.prefit()
 plotter.addContribution("XWW",True,"X #rightarrow WW",3,1,ROOT.kOrange+10,0,ROOT.kWhite)
-plotter.addContribution("resW",False," W+V",2,1,ROOT.kBlack,1001,ROOT.kSpring-5)
-plotter.addContribution("nonRes",False,"W+jets",2,1,ROOT.kBlack,1001,ROOT.kAzure-9,"_opt")
+plotter.addContribution("resW",False," resonant (W,t)",2,1,ROOT.kBlack,1001,ROOT.kSpring-5)
+plotter.addContribution("nonRes",False,"non resonant",2,1,ROOT.kBlack,1001,ROOT.kAzure-9,"_opt")
 
 
 
-
-for c in ['vbf','nob']:
+for c in ['nob']:
     if c=='vbf':
         pur=['NP']
     else:
         pur=['HP','LP']
     for p in pur:
         for l in ['e','mu']:
-
+            continue
             plotter.drawBinned("MJ","m_{j} (GeV)",c+"_"+l+"_"+p+"_13TeV",[65,110],0,0,"")                                                                                                            
             cmslabel_prelim(plotter.pad1,'2016',11)                                                                                                                                                                 
             plotter.canvas.SaveAs("postFit_"+c+"_"+l+"_"+p+"_13TeV.root")                                                                                                                                           
             plotter.canvas.SaveAs("postFit_"+c+"_"+l+"_"+p+"_13TeV.pdf")                                                                                                                                            
             plotter.canvas.SaveAs("postFit_"+c+"_"+l+"_"+p+"_13TeV.eps")                                                                                                                                            
-#            if c=='vbf':
-#                plotter.drawBinned("MLNuJ","m_{VV} (GeV)",c+"_"+l+"_"+p+"_13TeV",[],1,0,"MJ:low:30:65")
-#            else:
-#                plotter.drawBinned("MLNuJ","m_{VV} (GeV)",c+"_"+l+"_"+p+"_13TeV",[],1,1,"MJ:low:30:65")
+            if c=='vbf':
+                plotter.drawBinned("MLNuJ","m_{VV} (GeV)",c+"_"+l+"_"+p+"_13TeV",[],0,0,"MJ:low:30:65")
+            else:
+                plotter.drawBinned("MLNuJ","m_{VV} (GeV)",c+"_"+l+"_"+p+"_13TeV",[],0,1,"MJ:low:30:65")
 
-#            cmslabel_prelim(plotter.pad1,'2016',11)
-#            plotter.canvas.SaveAs("postFitMVVLo_"+c+"_"+l+"_"+p+"_13TeV.root")
-#            plotter.canvas.SaveAs("postFitMVVLo_"+c+"_"+l+"_"+p+"_13TeV.pdf")
-#            plotter.canvas.SaveAs("postFitMVVLo_"+c+"_"+l+"_"+p+"_13TeV.eps")
+            cmslabel_prelim(plotter.pad1,'2016',11)
+            plotter.canvas.SaveAs("postFitMVVLo_"+c+"_"+l+"_"+p+"_13TeV.root")
+            plotter.canvas.SaveAs("postFitMVVLo_"+c+"_"+l+"_"+p+"_13TeV.pdf")
+            plotter.canvas.SaveAs("postFitMVVLo_"+c+"_"+l+"_"+p+"_13TeV.eps")
 
-#            if c=='vbf':
-#                plotter.drawBinned("MLNuJ","m_{VV} (GeV)",c+"_"+l+"_"+p+"_13TeV",[],1,0,"MJ:high:110:150")
-#            else:
-#                plotter.drawBinned("MLNuJ","m_{VV} (GeV)",c+"_"+l+"_"+p+"_13TeV",[],1,1,"MJ:high:110:150")
+            if c=='vbf':
+                plotter.drawBinned("MLNuJ","m_{VV} (GeV)",c+"_"+l+"_"+p+"_13TeV",[],0,0,"MJ:high:110:210")
+            else:
+                plotter.drawBinned("MLNuJ","m_{VV} (GeV)",c+"_"+l+"_"+p+"_13TeV",[],0,1,"MJ:high:110:210")
 
-#            cmslabel_prelim(plotter.pad1,'2016',11)
-#            plotter.canvas.SaveAs("postFitMVVHi_"+c+"_"+l+"_"+p+"_13TeV.root")
-#            plotter.canvas.SaveAs("postFitMVVHi_"+c+"_"+l+"_"+p+"_13TeV.pdf")
-#            plotter.canvas.SaveAs("postFitMVVHi_"+c+"_"+l+"_"+p+"_13TeV.eps")
+            cmslabel_prelim(plotter.pad1,'2016',11)
+            plotter.canvas.SaveAs("postFitMVVHi_"+c+"_"+l+"_"+p+"_13TeV.root")
+            plotter.canvas.SaveAs("postFitMVVHi_"+c+"_"+l+"_"+p+"_13TeV.pdf")
+            plotter.canvas.SaveAs("postFitMVVHi_"+c+"_"+l+"_"+p+"_13TeV.eps")
 
 
 

@@ -137,12 +137,46 @@ def makeShapeUncertainties2D(filename,sample,syst):
     hU.Draw("COL")
     c.SaveAs(directory+"/"+sample+"_"+syst+"Up.root")
     c.SaveAs(directory+"/"+sample+"_"+syst+"Up.pdf")
+    c.SaveAs(directory+"/"+sample+"_"+syst+"Up.jpg")
 
     c=ROOT.TCanvas("c")
     c.cd()
     hD.Draw("COL")
     c.SaveAs(directory+"/"+sample+"_"+syst+"Down.root")
     c.SaveAs(directory+"/"+sample+"_"+syst+"Down.pdf")
+    c.SaveAs(directory+"/"+sample+"_"+syst+"Down.jpg")
+
+
+def makeShapeUncertaintiesProj2D(filename,sample,syst):
+    #MJJ
+    f=ROOT.TFile(filename)
+    hN = f.Get("histo")
+    hU = f.Get("histo_"+syst+"Up")
+    hD = f.Get("histo_"+syst+"Down")
+
+    
+    c=ROOT.TCanvas("c")
+    c.cd()
+    hN.ProjectionX("a").DrawNormalized("HIST")
+    hN.GetYaxis().SetRangeUser(1e-5,1000)
+    hU.ProjectionX("b").DrawNormalized("HIST,SAME")
+    hD.ProjectionX("c").DrawNormalized("HIST,SAME")
+    c.SetLogy()
+    c.SaveAs(directory+"/"+sample+"_"+syst+"ProjX.root")
+    c.SaveAs(directory+"/"+sample+"_"+syst+"ProjX.pdf")
+    c.SaveAs(directory+"/"+sample+"_"+syst+"ProjX.jpg")
+
+    c2=ROOT.TCanvas("c2")
+    c2.cd()
+    hN.ProjectionY("e").DrawNormalized("HIST")
+    hN.GetYaxis().SetRangeUser(0,1)
+    hU.ProjectionY("f").DrawNormalized("HIST,SAME")
+    hD.ProjectionY("g").DrawNormalized("HIST,SAME")
+    c2.SaveAs(directory+"/"+sample+"_"+syst+"ProjY.root")
+    c2.SaveAs(directory+"/"+sample+"_"+syst+"ProjY.pdf")
+    c2.SaveAs(directory+"/"+sample+"_"+syst+"ProjY.jpg")
+
+
     
 
 
@@ -162,6 +196,10 @@ def makeTemplates2D(filename,sample,tag):
     
     c.SaveAs(directory+"/"+sample+"_"+tag+".root")
     c.SaveAs(directory+"/"+sample+"_"+tag+".pdf")
+    c.SaveAs(directory+"/"+sample+"_"+tag+".jpg")
+
+
+
     
 def makeTemplates1D(filename,sample,tag):
     #MJJ
@@ -962,19 +1000,19 @@ def makeKernelScaleResolution(filename,histoname):
 #makeShapeUncertaintiesMVV("LNUJJ_2016/LNuJJ_MVVHist_Wjets_mu_HP.root","Wjets","mu","widthSyst")
 
 
-for c in ['vbf','nob']:
+for c in ['nob','vbf']:
     if c=='vbf':
         pur=['NP']
     else:
         pur=['HP','LP']
     for p in pur:
-        for l in ['e','mu']:
-            makeTemplates2D("LNuJJ_nonRes_2D_"+l+"_"+p+"_"+c+".root","template_nonRes",l+"_"+p+"_"+c)
+        for l in ['mu','e']:
+#            makeTemplates2D("LNuJJ_nonRes_2D_"+l+"_"+p+"_"+c+".root","template_nonRes",l+"_"+p+"_"+c)
 #            makeTemplates1D("LNuJJ_resW_MVV_"+l+"_"+p+"_"+c+".root","template_resW",l+"_"+p+"_"+c)
-            makeShapeUncertainties2D("LNuJJ_nonRes_2D_"+l+"_"+p+"_"+c+".root","systs_nonRes_"+l+"_"+p+"_"+c,"ScaleX")
-            makeShapeUncertainties2D("LNuJJ_nonRes_2D_"+l+"_"+p+"_"+c+".root","systs_nonRes_"+l+"_"+p+"_"+c,"ScaleY")
-            makeShapeUncertainties2D("LNuJJ_nonRes_2D_"+l+"_"+p+"_"+c+".root","systs_nonRes_"+l+"_"+p+"_"+c,"PTX")
-            makeShapeUncertainties2D("LNuJJ_nonRes_2D_"+l+"_"+p+"_"+c+".root","systs_nonRes_"+l+"_"+p+"_"+c,"PTY")
+            makeShapeUncertaintiesProj2D("LNuJJ_nonRes_2D_"+l+"_"+p+"_"+c+".root","systs_nonRes_"+l+"_"+p+"_"+c,"ScaleX")
+            makeShapeUncertaintiesProj2D("LNuJJ_nonRes_2D_"+l+"_"+p+"_"+c+".root","systs_nonRes_"+l+"_"+p+"_"+c,"ScaleY")
+            makeShapeUncertaintiesProj2D("LNuJJ_nonRes_2D_"+l+"_"+p+"_"+c+".root","systs_nonRes_"+l+"_"+p+"_"+c,"PTX")
+            makeShapeUncertaintiesProj2D("LNuJJ_nonRes_2D_"+l+"_"+p+"_"+c+".root","systs_nonRes_"+l+"_"+p+"_"+c,"PTY")
             continue;
 
 

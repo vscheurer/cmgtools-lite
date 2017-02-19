@@ -42,9 +42,9 @@ def returnString(func,options):
 
 def runFits(data,options):
 #    axis=ROOT.TAxis(10,array('d',[600,800,900,1000,1250,1500,2000,2500,3000,3500,4000]))
-    axis=ROOT.TAxis(12,array('d',[600,650,700,750,800,900,1000,1250,1500,2000,2500,3000,3500]))
+    axis=ROOT.TAxis(10,array('d',[600,650,700,750,800,900,1000,1250,1500,2000,2500]))
 
-    graphs={'mean':ROOT.TGraphErrors(),'sigma':ROOT.TGraphErrors(),'alpha':ROOT.TGraphErrors(),'n':ROOT.TGraphErrors(),'alpha2':ROOT.TGraphErrors(),'n2':ROOT.TGraphErrors()}
+    graphs={'mean':ROOT.TGraphErrors(),'sigma':ROOT.TGraphErrors(),'alpha':ROOT.TGraphErrors(),'n':ROOT.TGraphErrors(),'alpha2':ROOT.TGraphErrors(),'n2':ROOT.TGraphErrors(),'slope':ROOT.TGraphErrors(),'f':ROOT.TGraphErrors()}
 
     for i in range(1,axis.GetNbins()+1):
     
@@ -115,7 +115,7 @@ for filename in os.listdir(args[0]):
             dataPlotters.append(TreePlotter(args[0]+'/'+fname+'.root','tree'))
             dataPlotters[-1].setupFromFile(args[0]+'/'+fname+'.pck')
             dataPlotters[-1].addCorrectionFactor('xsec','tree')
-#            dataPlotters[-1].addCorrectionFactor('genWeight','tree')
+            dataPlotters[-1].addCorrectionFactor('genWeight','tree')
             dataPlotters[-1].addCorrectionFactor('puWeight','tree')
     
 sigmas=[]

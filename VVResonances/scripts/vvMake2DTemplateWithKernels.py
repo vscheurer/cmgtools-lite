@@ -38,18 +38,23 @@ def mirror(histo,histoNominal,name):
     return newHisto        
 
 
-def unequalScale(histo,name,alpha):
+def unequalScale(histo,name,alpha,power=1):
     newHistoU =copy.deepcopy(histo) 
     newHistoU.SetName(name+"Up")
     newHistoD =copy.deepcopy(histo) 
     newHistoD.SetName(name+"Down")
+    maxFactor = max(pow(histo.GetXaxis().GetXmax(),power),pow(histo.GetXaxis().GetXmin(),power))
     for i in range(1,histo.GetNbinsX()+1):
         x= histo.GetXaxis().GetBinCenter(i)
         for j in range(1,histo.GetNbinsY()+1):
             nominal=histo.GetBinContent(i,j)
-            factor = alpha/x 
-            newHistoU.SetBinContent(i,j,nominal*(factor))
-            newHistoD.SetBinContent(i,j,nominal/(factor))
+            factor = alpha*pow(x,power) 
+            newHistoU.SetBinContent(i,j,nominal*factor)
+            newHistoD.SetBinContent(i,j,nominal/factor)
+    if newHistoU.Integral()>0.0:        
+        newHistoU.Scale(1.0/newHistoU.Integral())        
+    if newHistoD.Integral()>0.0:        
+        newHistoD.Scale(1.0/newHistoD.Integral())        
     return newHistoU,newHistoD        
 
 
@@ -100,13 +105,13 @@ def smoothTailOLD(hist):
 
 
 def smoothTail(hist,bini=30):
-#    expo=ROOT.TF1("expo","expo",1000,8000)
-    expo=ROOT.TF1("expo","[0]*((1-x/13000.0)^[1])/(x/13000.0)^([2]+[3]*log(x))",1000,8000)
-    expo.SetParameters(1,1,1,0)
-    expo.SetParLimits(0,0,1)
-    expo.SetParLimits(1,0.1,100)
-    expo.SetParLimits(2,0.1,100)
-    expo.SetParLimits(3,0.0,20)
+    expo=ROOT.TF1("expo","expo",1000,8000)
+#    expo=ROOT.TF1("expo","[0]*((1-x/13000.0)^[1])/(x/13000.0)^([2]+[3]*log(x))",1000,8000)
+#    expo.SetParameters(1,1,1,0)
+#    expo.SetParLimits(0,0,1)
+#    expo.SetParLimits(1,0.1,100)
+#    expo.SetParLimits(2,0.1,100)
+#    expo.SetParLimits(3,0.0,20)
 
     proje = hist.ProjectionX("proje")
     NBINSX=hist.GetNbinsX()
@@ -116,11 +121,12 @@ def smoothTail(hist,bini=30):
         if proje.GetBinContent(j)/proje.Integral()<0.0005:
             proje.SetBinError(j,1.8)
 
-    proje.Fit(expo,"","",1400,8000)
+#    proje.Fit(expo,"","",1400,8000)
+    proje.Fit(expo,"","",2500,8000)
     
     for i in range(1,proje.GetNbinsX()+1):
         x=proje.GetXaxis().GetBinCenter(i)
-        if x>2000:
+        if x>2500:
             proje.SetBinContent(i,expo.Eval(x))
 
     for i in range(1,hist.GetNbinsY()+1):
@@ -157,6 +163,7 @@ for filename in os.listdir(args[0]):
             dataPlotters[-1].addCorrectionFactor('puWeight','tree')
             dataPlotters[-1].addCorrectionFactor('lnujj_sf','branch')
             dataPlotters[-1].addCorrectionFactor('lnujj_btagWeight','branch')
+            dataPlotters[-1].addCorrectionFactor('truth_genTop_weight','branch')
             dataPlotters[-1].filename = fname
 
 
@@ -164,6 +171,7 @@ for filename in os.listdir(args[0]):
             dataPlottersNW[-1].addCorrectionFactor('puWeight','tree')
             dataPlottersNW[-1].addCorrectionFactor('genWeight','tree')
             dataPlottersNW[-1].addCorrectionFactor('lnujj_sf','branch')
+            dataPlotters[-1].addCorrectionFactor('truth_genTop_weight','branch')
             dataPlottersNW[-1].addCorrectionFactor('lnujj_btagWeight','branch')
             dataPlottersNW[-1].filename = fname
 
@@ -193,15 +201,14 @@ binsx=[]
 for i in range(0,options.binsx+1):
     binsx.append(options.minx+i*(options.maxx-options.minx)/options.binsx)
 
-binsy=[25.,38.,50.,60.,70.,80.,90.,100.,120.,140.,160.,190.,237.]    
-
+binsy=[0,10.,20.,30.,40.,50.,60.,70.,80.,90.,100.,120.,140.,150.,160.,190.,210.,240.]    
 
 
 ###Make res up and down
-#resUp = ROOT.TH1F(res_x)
-#resUp.SetName("resUp")
-#for i in range(1,res_x.GetNbinsX()+1):
-#    resUp.SetBinContent(i,res_x.GetBinContent(i)+0.3)
+resUp = ROOT.TH1F(res_x)
+resUp.SetName("resUp")
+for i in range(1,res_x.GetNbinsX()+1):
+    resUp.SetBinContent(i,res_x.GetBinContent(i)+0.3)
 
 
 scaleUp = ROOT.TH1F(scale_x)
@@ -283,7 +290,7 @@ histogram_top_down=ROOT.TH2F("histo_TOPDown","histo",len(binsx)-1,array('f',bins
 histogram_scale_up=ROOT.TH2F("histo_ScaleUp","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
 histogram_scale_down=ROOT.TH2F("histo_ScaleDown","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
 
-#histogram_res_up=ROOT.TH2F("histo_ResUp","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+histogram_res_up=ROOT.TH2F("histo_ResUp","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
 #histogram_res_down=ROOT.TH2F("histo_ResDown","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
 
 #histogram_qg_up=ROOT.TH2F("histo_GluonUp","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
@@ -303,7 +310,7 @@ histograms=[
     histogram_scale_down,
 #    histogram_scaleLog_up,
 #    histogram_scaleLog_down,
-#    histogram_res_up,
+    histogram_res_up,
 #    histogram_res_down,
 #    histogram_qg_up,
 #    histogram_qg_down,
@@ -344,7 +351,13 @@ for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
 
     #remove the factor you added:
 
-
+    #resUp
+    histTMP=ROOT.TH2F("histoTMP","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+    datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'lnujj_l2_gen_pt',scale_x,scale_y,resUp,res_y,histTMP);
+    if histTMP.Integral()>0:
+        histTMP.Scale(histI.Integral()/histTMP.Integral())
+        histogram_res_up.Add(histTMP)
+    histTMP.Delete()
 
 
 
@@ -383,16 +396,31 @@ for hist in histograms:
     expanded.Write()
     finalHistograms[hist.GetName()]=expanded
 
-histogram_pt_down,histogram_pt_up=unequalScale(finalHistograms['histo'],"histo_PT",800.0)
+histogram_pt_down,histogram_pt_up=unequalScale(finalHistograms['histo'],"histo_PT",10./5000)
 conditional(histogram_pt_down)
 histogram_pt_down.Write()
 conditional(histogram_pt_up)
 histogram_pt_up.Write()
 
+
+
+h1,h2=unequalScale(finalHistograms['histo'],"histo_OPT",2*600,-1)
+conditional(h1)
+h1.Write()
+conditional(h2)
+h2.Write()
+
+h1,h2=unequalScale(finalHistograms['histo'],"histo_PT2",5*5000*5000,2)
+conditional(h1)
+h1.Write()
+conditional(h2)
+h2.Write()
+
+
 ##special treatment for mirroring
-#histogram_res_down=mirror(finalHistograms['histo_ResUp'],finalHistograms['histo'],"histo_ResDown")
-#conditional(histogram_res_down)
-#histogram_res_down.Write()
+histogram_res_down=mirror(finalHistograms['histo_ResUp'],finalHistograms['histo'],"histo_ResDown")
+conditional(histogram_res_down)
+histogram_res_down.Write()
 
 
 

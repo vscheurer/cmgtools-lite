@@ -28,6 +28,10 @@ class RooPlotter(object):
         varBins=self.w.var(var).getBins()
         #make frame
         self.frame=self.w.var(var).frame()
+
+        if log:
+            self.frame.GetYaxis().SetRangeUser(1e-2,1e+5)
+
         dataset=self.w.data("data_obs").reduce("CMS_channel==CMS_channel::"+cat)
         dataset.plotOn(self.frame,ROOT.RooFit.Name("datapoints"),ROOT.RooFit.Invisible())
         visError=False
@@ -101,8 +105,6 @@ class RooPlotter(object):
         self.frame.SetTitleOffset(0.90,"X")    
         self.frame.SetTitleOffset(0.93,"Y")    
 
-        if log:
-            self.frame.GetYaxis().SetRangeUser(1e-1,1e+4)
         self.frame.Draw()       
         for c in self.contributions:
             name=c['name']
@@ -179,6 +181,8 @@ class RooPlotter(object):
                 dataset=dataset.reduce("{var}>{mini}&&{var}<{maxi}".format(var=rdata[0],mini=rdata[2],maxi=rdata[3]))
         
         dataset.plotOn(self.frame,ROOT.RooFit.Name("datapoints"),ROOT.RooFit.Invisible())
+
+
         visError=False
         
         #make special binning for fats drawing
@@ -295,12 +299,12 @@ class RooPlotter(object):
 
 
         
-        if log:
-            self.frame.GetYaxis().SetRangeUser(1e-2,1e+4)
 
         self.frame.Draw("AH")
 
         self.stack.Draw("A,HIST,SAME")
+        if log:
+            self.frame.GetYaxis().SetRangeUser(0.3,1e+6)
 
         if visError:
             self.histoSum.Draw("E2,same")

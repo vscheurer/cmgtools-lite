@@ -24,6 +24,7 @@ parser.add_option("-V","--MVV",dest="mvv",help="mVV variable",default='')
 parser.add_option("-m","--min",dest="mini",type=float,help="min MJJ",default=40)
 parser.add_option("-M","--max",dest="maxi",type=float,help="max MJJ",default=160)
 parser.add_option("-e","--exp",dest="doExp",type=int,help="useExponential",default=1)
+parser.add_option("-f","--fix",dest="fixPars",help="Fixed parameters",default="")
 
 (options,args) = parser.parse_args()
 #define output dictionary
@@ -73,6 +74,15 @@ for mass in sorted(samples.keys()):
         fitter.jetResonanceNOEXP('model','x')
 #        fitter.w.var("alpha").setVal(0.50)
 #        fitter.w.var("alpha").setConstant(1)
+
+
+    if options.fixPars!="":
+        fixedPars =options.fixPars.split(',')
+        for par in fixedPars:
+            parVal = par.split(':')
+            fitter.w.var(parVal[0]).setVal(float(parVal[1]))
+            fitter.w.var(parVal[0]).setConstant(1)
+
 
 #    fitter.w.var("MH").setVal(mass)
     histo = plotter.drawTH1(options.mvv,options.cut,"1",int((options.maxi-options.mini)/4),options.mini,options.maxi)

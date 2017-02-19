@@ -21,7 +21,9 @@ parser.add_option("-b","--binsx",dest="binsx",type=int,help="bins in x",default=
 parser.add_option("-x","--minx",dest="minx",type=float,help="minimum x",default=600)
 parser.add_option("-X","--maxx",dest="maxx",type=float, help="maximum x",default=5000)
 parser.add_option("-V","--vary",dest="vary",help="variablex",default='lnujj_l2_pruned_mass')
-parser.add_option("-l","--lumi",dest="lumi",type=float, help="lumi",default="1")
+parser.add_option("-l","--lumi",dest="lumi",type=float, help="lumi",default="35000")
+parser.add_option("-f","--fix",dest="fixPars",help="Fixed parameters",default="")
+parser.add_option("-e","--doExp",dest="doExp",type=int,help="DoExp",default=0)
 
 
 
@@ -44,12 +46,11 @@ def returnString(func,options):
 def runFits(data,options):
 
 #    axis=ROOT.TAxis(10,array('d',[600,800,900,1000,1250,1500,2000,2500,3000,3500,4000]))
-    axis=ROOT.TAxis(12,array('d',[600,650,700,750,800,900,1000,1250,1500,2000,2500,3000,3500,4000]))
+    axis=ROOT.TAxis(14,array('d',[550,600,650,700,750,800,900,1000,1250,1500,2000,2500,3000,3500,4000]))
 
-    graphs={'mean':ROOT.TGraphErrors(),'sigma':ROOT.TGraphErrors(),'alpha':ROOT.TGraphErrors(),'n':ROOT.TGraphErrors(),'alpha2':ROOT.TGraphErrors(),'n2':ROOT.TGraphErrors()}
+    graphs={'meanW':ROOT.TGraphErrors(),'sigmaW':ROOT.TGraphErrors(),'alphaW':ROOT.TGraphErrors(),'alphaW2':ROOT.TGraphErrors(),'n':ROOT.TGraphErrors(),'meanTop':ROOT.TGraphErrors(),'sigmaTop':ROOT.TGraphErrors(),'alphaTop':ROOT.TGraphErrors(),'alphaTop2':ROOT.TGraphErrors(),'f':ROOT.TGraphErrors(),'f2':ROOT.TGraphErrors(),'slope':ROOT.TGraphErrors()}
 
     for i in range(1,axis.GetNbins()+1):
-    
         center=axis.GetBinCenter(i)
         h = data.drawTH1(options.varx,options.cut+"*({vary}>{mini}&&{vary}<{maxi})".format(vary=options.vary,mini=axis.GetBinLowEdge(i),maxi=axis.GetBinUpEdge(i)),str(options.lumi),options.binsx,options.minx,options.maxx) 
 
@@ -58,8 +59,20 @@ def runFits(data,options):
         fitter.w.var("M").setVal((options.maxx-options.minx)/2.0)
         fitter.w.var("M").setMax(options.maxx)
         fitter.w.var("M").setMin(options.minx)
+        fitter.jetDoublePeakExp('model','M')
+        if options.doExp==0:
+            fitter.w.var("f2").setVal(1.0)
+            fitter.w.var("f2").setConstant(1)
+            fitter.w.var("slope").setVal(0.0)
+            fitter.w.var("slope").setConstant(1)
 
-        fitter.jetResonanceNOEXP('model','M')
+        if options.fixPars!="":
+            fixedPars =options.fixPars.split(',')
+            for par in fixedPars:
+                parVal = par.split(':')
+                fitter.w.var(parVal[0]).setVal(float(parVal[1]))
+                fitter.w.var(parVal[0]).setConstant(1)
+
         fitter.importBinnedData(histo,['M'],'data')   
         fitter.fit('model','data',[ROOT.RooFit.SumW2Error(1),ROOT.RooFit.Minos(0)])
         fitter.fit('model','data',[ROOT.RooFit.SumW2Error(1),ROOT.RooFit.Minos(1)])
@@ -100,8 +113,10 @@ for filename in os.listdir(args[0]):
             dataPlotters.append(TreePlotter(args[0]+'/'+fname+'.root','tree'))
             dataPlotters[-1].setupFromFile(args[0]+'/'+fname+'.pck')
             dataPlotters[-1].addCorrectionFactor('xsec','tree')
-#            dataPlotters[-1].addCorrectionFactor('genWeight','tree')
+            dataPlotters[-1].addCorrectionFactor('genWeight','tree')
             dataPlotters[-1].addCorrectionFactor('puWeight','tree')
+            dataPlotters[-1].addCorrectionFactor('lnujj_sf','tree')
+            dataPlotters[-1].addCorrectionFactor('truth_genTop_weight','tree')
     
 
 data=MergedPlotter(dataPlotters)

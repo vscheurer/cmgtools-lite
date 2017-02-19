@@ -38,7 +38,7 @@ def mirror(histo,histoNominal,name):
         newHisto.SetBinContent(i,nominal*nominal/up)
     return newHisto        
 
-def unequalScale(histo,name,alpha):
+def unequalScale(histo,name,alpha,power=1):
     newHistoU =copy.deepcopy(histo) 
     newHistoU.SetName(name+"Up")
     newHistoD =copy.deepcopy(histo) 
@@ -46,9 +46,9 @@ def unequalScale(histo,name,alpha):
     for i in range(1,histo.GetNbinsX()+1):
         x= histo.GetXaxis().GetBinCenter(i)
         nominal=histo.GetBinContent(i)
-        factor = alpha/x 
-        newHistoU.SetBinContent(i,nominal*(factor))
-        newHistoD.SetBinContent(i,nominal/(factor))
+        factor = alpha*pow(x,power) 
+        newHistoU.SetBinContent(i,nominal*factor)
+        newHistoD.SetBinContent(i,nominal/factor)
     return newHistoU,newHistoD        
 
 
@@ -137,13 +137,17 @@ for filename in os.listdir(args[0]):
             dataPlotters[-1].addCorrectionFactor('puWeight','tree')
             dataPlotters[-1].addCorrectionFactor('lnujj_sf','branch')
             dataPlotters[-1].addCorrectionFactor('lnujj_btagWeight','branch')
+            dataPlotters[-1].addCorrectionFactor('truth_genTop_weight','branch')
+
             dataPlotters[-1].filename=fname
+
             dataPlottersNW.append(TreePlotter(args[0]+'/'+fname+'.root','tree'))
             dataPlottersNW[-1].addCorrectionFactor('puWeight','tree')
             dataPlottersNW[-1].addCorrectionFactor('genWeight','tree')
             dataPlottersNW[-1].addCorrectionFactor('lnujj_sf','branch')
             dataPlottersNW[-1].addCorrectionFactor('lnujj_btagWeight','branch')
             dataPlottersNW[-1].filename=fname
+            dataPlottersNW[-1].addCorrectionFactor('truth_genTop_weight','branch')
 
 data=MergedPlotter(dataPlotters)
 
@@ -200,8 +204,8 @@ for i in range(1,res.GetNbinsX()+1):
 histogram=ROOT.TH1F("histo","histo",options.binsx,options.minx,options.maxx)
 histogram.Sumw2()
 
-#histogram_res_up=ROOT.TH1F("histo_ResUp","histo",options.binsx,options.minx,options.maxx)
-#histogram_res_up.Sumw2()
+histogram_res_up=ROOT.TH1F("histo_ResUp","histo",options.binsx,options.minx,options.maxx)
+histogram_res_up.Sumw2()
 
 histogram_scale_up=ROOT.TH1F("histo_ScaleUp","histo",options.binsx,options.minx,options.maxx)
 histogram_scale_up.Sumw2()
@@ -223,7 +227,7 @@ histogram_top_down.Sumw2()
 
 histograms=[
     histogram,
-#    histogram_res_up,
+    histogram_res_up,
     histogram_scale_up,
     histogram_scale_down,
     histogram_top_up,
@@ -261,12 +265,12 @@ for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
 
 
     #res Up
-#    histTMP=ROOT.TH1F("histoTMP","histo",options.binsx,options.minx,options.maxx)
-#    datamaker=ROOT.cmg.GaussianSumTemplateMaker1D(dataset,options.var,'lnujj_l2_gen_pt',scale,resUp,histTMP);
-#    if histTMP.Integral()>0:
-#        histTMP.Scale(histI.Integral()/histTMP.Integral())
-#        histogram_res_up.Add(histTMP)
-#    histTMP.Delete()
+    histTMP=ROOT.TH1F("histoTMP","histo",options.binsx,options.minx,options.maxx)
+    datamaker=ROOT.cmg.GaussianSumTemplateMaker1D(dataset,options.var,'lnujj_l2_gen_pt',scale,resUp,histTMP);
+    if histTMP.Integral()>0:
+        histTMP.Scale(histI.Integral()/histTMP.Integral())
+        histogram_res_up.Add(histTMP)
+    histTMP.Delete()
 
 
 
@@ -316,14 +320,25 @@ for hist in histograms:
 
 
 if options.resHisto=='x':
-    alpha=800
+    alpha=2.0/5000.
 else:
-    alpha=60
+    alpha=2.0/150
 histogram_pt_down,histogram_pt_up=unequalScale(finalHistograms['histo'],"histo_PT",alpha)
 histogram_pt_down.Write()
 histogram_pt_up.Write()
 
+if options.resHisto=='x':
+    alpha=1.5*600
+else:
+    alpha=1.5*20
+histogram_opt_down,histogram_opt_up=unequalScale(finalHistograms['histo'],"histo_OPT",alpha,-1)
+histogram_opt_down.Write()
+histogram_opt_up.Write()
 
+
+
+histogram_res_down=mirror(finalHistograms['histo_ResUp'],finalHistograms['histo'],"histo_ResDown")
+histogram_res_down.Write()
 
 
 #scaleUp.Write("scaleUp")

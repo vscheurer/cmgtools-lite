@@ -7,29 +7,25 @@ import os
 cuts={}
 
 
-cuts['common'] = '(((HLT2_MU||HLT2_ELE||HLT2_ISOMU||HLT2_ISOELE||HLT2_MET120)&&run>2000)+(run<2000)*lnujj_sf)*(Flag_goodVertices&&Flag_CSCTightHaloFilter&&Flag_HBHENoiseFilter&&Flag_HBHENoiseIsoFilter&&Flag_eeBadScFilter&&lnujj_nOtherLeptons==0&&lnujj_l2_softDrop_mass>0&&lnujj_LV_mass>0&&Flag_badChargedHadronFilter&&Flag_badMuonFilter)'
+cuts['common'] = '((HLT_MU||HLT_ELE||HLT_ISOMU||HLT_ISOELE||HLT_MET120)*(run>500) + (run<500)*lnujj_sf)*(Flag_goodVertices&&Flag_CSCTightHaloFilter&&Flag_HBHENoiseFilter&&Flag_HBHENoiseIsoFilter&&Flag_eeBadScFilter&&lnujj_nOtherLeptons==0&&lnujj_l2_softDrop_mass>0&&lnujj_LV_mass>0&&Flag_badChargedHadronFilter&&Flag_badMuonFilter)'
 
 
 cuts['mu'] = '(abs(lnujj_l1_l_pdgId)==13)'
 cuts['e'] = '(abs(lnujj_l1_l_pdgId)==11)'
-cuts['HP'] = '(lnujj_l2_tau2/lnujj_l2_tau1<0.6)'
-cuts['LP'] = '(lnujj_l2_tau2/lnujj_l2_tau1>0.6&&lnujj_l2_tau2/lnujj_l2_tau1<0.75)'
-cuts['NP'] = '(lnujj_l2_tau2/lnujj_l2_tau1>0)'
+cuts['HP'] = '(lnujj_l2_tau2/lnujj_l2_tau1<0.55)'
+cuts['LP'] = '(lnujj_l2_tau2/lnujj_l2_tau1>0.55&&lnujj_l2_tau2/lnujj_l2_tau1<0.75)'
 
-cuts['nob'] = '(lnujj_nMediumBTags==0&&(!(lnujj_vbfDEta>4&&lnujj_vbfMass>400)))*lnujj_btagWeight'
+
+cuts['nob'] = '(lnujj_nMediumBTags==0)*lnujj_btagWeight'
 cuts['b'] = '(lnujj_nMediumBTags>0)*lnujj_btagWeight'
-cuts['vbf'] = '(lnujj_nMediumBTags==0&&lnujj_vbfDEta>4&&lnujj_vbfMass>400)*lnujj_btagWeight'
-cuts['inc'] = '(lnujj_LV_mass>0)'
-cuts['dijet'] = '(lnujj_nMediumBTags==0&&lnujj_nJets>=2)*lnujj_btagWeight'
 
-
-cuts['resW']='(lnujj_l2_mergedVTruth==1&&lnujj_l2_gen_mass<110)'
-cuts['nonres']='(lnujj_l2_mergedVTruth==0||lnujj_l2_gen_mass>110)'
+cuts['resW']='(lnujj_l2_mergedVTruth==1)'
+cuts['nonres']='(lnujj_l2_mergedVTruth==0)'
 
 
 leptons=['mu','e']
-purities=['HP','LP','NP']
-categories=['nob','vbf']
+purities=['HP','LP']
+categories=['nob']
 
 
 WWTemplate="BulkGravToWWToWlepWhad_narrow"
@@ -54,22 +50,21 @@ nonResTemplate="WJetsToLNu_HT,TT_pow,DYJetsToLL_M50_HT"
 
 
 minMJJ=30.0
-maxMJJ=150.0
+maxMJJ=210.0
 
 minMVV=600.0
 maxMVV=5000.0
 
-
-binsMJJ=60
-binsMVV=88
+binsMJJ=90
+binsMVV=168
 
 
 cuts['acceptance']= "(lnujj_LV_mass>{minMVV}&&lnujj_LV_mass<{maxMVV}&&lnujj_l2_softDrop_mass>{minMJJ}&&lnujj_l2_softDrop_mass<{maxMJJ})".format(minMVV=minMVV,maxMVV=maxMVV,minMJJ=minMJJ,maxMJJ=maxMJJ)
-cuts['acceptanceGEN']= "(lnujj_l2_gen_softDrop_mass>{minMJJ}&&lnujj_l2_gen_softDrop_mass<{maxMJJ}&&lnujj_gen_partialMass>{minMVV}&&lnujj_gen_partialMass<{maxMVV})".format(minMJJ=29,maxMJJ=300,minMVV=0,maxMVV=5000)                
+cuts['acceptanceGEN']= "(lnujj_l2_gen_softDrop_mass>{minMJJ}&&lnujj_l2_gen_softDrop_mass<{maxMJJ}&&lnujj_gen_partialMass>{minMVV}&&lnujj_gen_partialMass<{maxMVV})".format(minMJJ=25,maxMJJ=300,minMVV=500,maxMVV=10000)                
 #cuts['acceptanceGEN']= "(lnujj_l2_gen_softDrop_mass>0&&lnujj_gen_partialMass>0)"
 
 cuts['acceptanceGENMVV']= "(lnujj_gen_partialMass>{minMVV}&&lnujj_gen_partialMass<{maxMVV})".format(minMVV=400,maxMVV=5000)
-cuts['acceptanceGENMJJ']= "(lnujj_l2_gen_softDrop_mass>{minMJJ}&&lnujj_l2_gen_softDrop_mass<{maxMJJ}&&lnujj_gen_partialMass>{minMVV}&&lnujj_gen_partialMass<{maxMVV})".format(minMJJ=0,maxMJJ=maxMJJ+20,minMVV=minMVV,maxMVV=maxMVV)
+cuts['acceptanceGENMJJ']= "(lnujj_l2_gen_softDrop_mass>{minMJJ}&&lnujj_l2_gen_softDrop_mass<{maxMJJ}&&lnujj_LV_mass>{minMVV}&&lnujj_LV_mass<{maxMVV})".format(minMJJ=minMJJ-5,maxMJJ=maxMJJ+5,minMVV=minMVV,maxMVV=maxMVV)
 cuts['acceptanceMJJ']= "(lnujj_l2_softDrop_mass>{minMJJ}&&lnujj_l2_softDrop_mass<{maxMJJ})".format(minMJJ=minMJJ,maxMJJ=maxMJJ)                
 
 
@@ -92,19 +87,19 @@ def makeSignalShapesMJJ(filename,template):
         doExp=1
         if p=='HP' or p=='NP':
             doExp=0
-        cmd='vvMakeSignalMJJShapes.py -s "{template}" -c "{cut}"  -o "{rootFile}" -V "lnujj_l2_softDrop_mass" -m {minMJJ} -M {maxMJJ} -e {doExp}  samples'.format(template=template,cut=cut,rootFile=rootFile,minMJJ=minMJJ,maxMJJ=maxMJJ,doExp=doExp)
+        cmd='vvMakeSignalMJJShapes.py -s "{template}" -c "{cut}"  -o "{rootFile}" -V "lnujj_l2_softDrop_mass" -m {minMJJ} -M {maxMJJ} -e {doExp} -f "alpha:1.347" samples'.format(template=template,cut=cut,rootFile=rootFile,minMJJ=minMJJ,maxMJJ=maxMJJ,doExp=doExp)
         os.system(cmd)
         jsonFile=filename+"_MJJ_"+p+".json"
 
         if p=='HP' or p=='NP':
             cmd='vvMakeJSON.py  -o "{jsonFile}" -g "mean:pol4,sigma:pol4,alpha:pol3,n:pol0,alpha2:pol3,n2:pol0,slope:pol0,f:pol0" -m 601 -M 5000  {rootFile}  '.format(jsonFile=jsonFile,rootFile=rootFile)
         else:
-            cmd='vvMakeJSON.py  -o "{jsonFile}" -g "mean:pol3,sigma:pol1,alpha:pol0,n:pol0,slope:pol1,f:pol4,alpha2:pol0,n2:pol0" -m 601 -M 5000  {rootFile}  '.format(jsonFile=jsonFile,rootFile=rootFile)
+            cmd='vvMakeJSON.py  -o "{jsonFile}" -g "mean:pol3,sigma:pol1,alpha:pol0,n:pol0,slope:pol1,f:laur4,alpha2:pol0,n2:pol0" -m 601 -M 5000  {rootFile}  '.format(jsonFile=jsonFile,rootFile=rootFile)
 
         os.system(cmd)
 
 
-def makeSignalYields(filename,template,branchingFraction):
+def makeSignalYields(filename,template,branchingFraction,sfP = {'HP':1.0,'LP':1.0}):
     for region in categories:
         if region=='vbf':
             pur=['NP']
@@ -113,7 +108,7 @@ def makeSignalYields(filename,template,branchingFraction):
             
         for purity in pur:
             for lepton in leptons:
-                cut = "*".join([cuts[lepton],cuts[purity],cuts['common'],cuts[region],cuts['acceptance']])
+                cut = "*".join([cuts[lepton],cuts[purity],cuts['common'],cuts[region],cuts['acceptance'],str(sfP[purity])])
                 #Signal yields
                 yieldFile=filename+"_"+lepton+"_"+purity+"_"+region+"_yield"
                 cmd='vvMakeSignalYields.py -s {template} -c "{cut}" -o {output} -V "lnujj_LV_mass" -m {minMVV} -M {maxMVV} -f "pol5" -b {BR} -x 800 samples'.format(template=template, cut=cut, output=yieldFile,minMVV=minMVV,maxMVV=maxMVV,BR=branchingFraction)
@@ -124,7 +119,7 @@ def makeSignalYields(filename,template,branchingFraction):
 
 def makeBackgroundShapesMVVConditional(name,filename,template,addCut=""):
     #first parameterize detector response
-    cut='*'.join([cuts['common'],'lnujj_l2_gen_softDrop_mass>0&&lnujj_gen_partialMass>0',addCut])
+    cut='*'.join([cuts['common'],'lnujj_l2_gen_softDrop_mass>10&&lnujj_gen_partialMass>0',addCut])
     resFile=filename+"_"+name+"_detectorResponse.root"            
     cmd='vvMake2DDetectorParam.py  -o "{rootFile}" -s "{samples}" -c "{cut}"  -v "lnujj_LV_mass,lnujj_l2_softDrop_mass"  -g "lnujj_gen_partialMass,lnujj_l2_gen_softDrop_mass,lnujj_l2_gen_pt"  -b "150,200,250,300,350,400,450,500,600,700,800,900,1000,1500,2000,5000"   samples'.format(rootFile=resFile,samples=template,cut=cut,binsMVV=binsMVV,minMVV=minMVV,maxMVV=maxMVV,tag=name)
     os.system(cmd)
@@ -149,11 +144,12 @@ def makeBackgroundShapesMVVConditional(name,filename,template,addCut=""):
                 os.system(cmd)
 
 
+
 def makeBackgroundShapesMJJ(name,filename,template,addCut=""):
     #first parameterize detector response
 
 
-    cut='*'.join([cuts['common'],'lnujj_l2_gen_softDrop_mass>0&&lnujj_gen_partialMass>0',addCut])
+    cut='*'.join([cuts['common'],'lnujj_l2_gen_softDrop_mass>10&&lnujj_gen_partialMass>0',addCut])
     resFile=filename+"_"+name+"_detectorResponse.root"            
     cmd='vvMake2DDetectorParam.py  -o "{rootFile}" -s "{samples}" -c "{cut}"  -v "lnujj_LV_mass,lnujj_l2_softDrop_mass"  -g "lnujj_gen_partialMass,lnujj_l2_gen_softDrop_mass,lnujj_l2_gen_pt"  -b "150,200,250,300,350,400,450,500,600,700,800,900,1000,1500,2000,5000"   samples'.format(rootFile=resFile,samples=template,cut=cut,binsMVV=binsMVV,minMVV=minMVV,maxMVV=maxMVV,tag=name)
     os.system(cmd)
@@ -187,7 +183,9 @@ def mergeBackgroundShapes(name,filename):
                 inputy=filename+"_"+name+"_MJJ_"+l+"_"+p+"_"+c+".root"            
                 inputx=filename+"_"+name+"_COND2D_"+l+"_"+p+"_"+c+".root"            
                 rootFile=filename+"_"+name+"_2D_"+l+"_"+p+"_"+c+".root"            
-                cmd='vvMergeHistosToPDF2D.py -i "{inputx}" -I "{inputy}" -o "{rootFile}" -s "Scale:ScaleX,PT:PTX" -S "Scale:ScaleY,PT:PTY" -C "PT:PTBoth" '.format(rootFile=rootFile,inputx=inputx,inputy=inputy)
+                cmd='vvMergeHistosToPDF2D.py -i "{inputx}" -I "{inputy}" -o "{rootFile}" -s "Scale:ScaleX,PT:PTX,OPT:OPTX,PT2:PTX2,Res:ResX,TOP:TOPX" -S "Scale:ScaleY,PT:PTY,TOP:TOPY,OPT:OPTY,Res:ResY" -C "PT:PTBoth" '.format(rootFile=rootFile,inputx=inputx,inputy=inputy)
+                os.system(cmd)
+
                 os.system(cmd)
 
 
@@ -195,7 +193,7 @@ def makeBackgroundShapesMVV(name,filename,template,addCut=""):
     #first parameterize detector response
 
 
-    cut='*'.join([cuts['common'],'lnujj_l2_gen_softDrop_mass>0&&lnujj_gen_partialMass>0',addCut])
+    cut='*'.join([cuts['common'],'lnujj_l2_gen_softDrop_mass>10&&lnujj_gen_partialMass>0',addCut])
     resFile=filename+"_"+name+"_detectorResponse.root"            
     cmd='vvMake2DDetectorParam.py  -o "{rootFile}" -s "{samples}" -c "{cut}"  -v "lnujj_LV_mass,lnujj_l2_softDrop_mass"  -g "lnujj_gen_partialMass,lnujj_l2_gen_softDrop_mass,lnujj_l2_gen_pt"  -b "150,200,250,300,350,400,450,500,600,700,800,900,1000,1500,2000,5000"   samples'.format(rootFile=resFile,samples=template,cut=cut,binsMVV=binsMVV,minMVV=minMVV,maxMVV=maxMVV,tag=name)
     os.system(cmd)
@@ -229,9 +227,9 @@ def makeResWMJJShapes(name,filename,template,addCut=""):
             doExp=1    
 
         if addCut=='':
-            cut='*'.join([cuts['common'],cuts[p]])
+            cut='*'.join([cuts['common'],cuts[p],cuts['inc']])
         else:
-            cut='*'.join([cuts['common'],cuts[p],addCut])
+            cut='*'.join([cuts['common'],cuts[p],cuts['inc'],addCut])
                        
         mjjFile=filename+"_MJJ_"+name+"_"+p
         jsonFile=filename+"_XWW_MJJ_"+p+".json"
@@ -239,28 +237,37 @@ def makeResWMJJShapes(name,filename,template,addCut=""):
         os.system(cmd)
 #        print 'NOT RUNNING FIT'
         jsonFile=filename+"_MJJ_"+name+"_"+p+".json"
-        cmd='vvMakeJSON.py  -o "{jsonFile}" -g "mean:pol1,sigma:pol1,alpha:pol3,n:pol0,alpha2:pol0,n2:pol0" -m 500 -M 3500  {rootFile}  '.format(jsonFile=jsonFile,rootFile=mjjFile+'.root')
-        os.system(cmd)
+        if doExp==0:
+            cmd='vvMakeJSON.py  -o "{jsonFile}" -g "mean:pol1,sigma:llog,alpha:pol3,n:pol0,alpha2:pol0,n2:pol0" -m 500 -M 2500  {rootFile}  '.format(jsonFile=jsonFile,rootFile=mjjFile+'.root')
+        else:
+            cmd='vvMakeJSON.py  -o "{jsonFile}" -g "mean:pol1,sigma:llog,alpha:pol3,n:pol0,alpha2:pol0,n2:pol0,slope:pol0,f:pol0" -m 500 -M 2500  {rootFile}  '.format(jsonFile=jsonFile,rootFile=mjjFile+'.root')
 
+        os.system(cmd)
 
 
 
 
 def makeResTopMJJShapes(name,filename,template,addCut=""):
     for p in purities:
-        doExp=0    
         if addCut=='':
             cut='*'.join([cuts['common'],cuts[p]])
         else:
             cut='*'.join([cuts['common'],cuts[p],addCut])
-                       
+
         mjjFile=filename+"_MJJ_"+name+"_"+p
-        cmd='vvMakeTopMJJMergedConditionalShapes.py -s "{template}" -c "{cut}"  -o "{rootFile}" -v "lnujj_l2_softDrop_mass" -V "lnujj_LV_mass"  -b 60  -x {minMJJ} -X {maxMJJ} samples'.format(template=template,cut=cut,rootFile=mjjFile,minMJJ=minMJJ,maxMJJ=230)
-        os.system(cmd)
-#        print 'NOT RUNNING FIT'
         jsonFile=filename+"_MJJ_"+name+"_"+p+".json"
-        cmd='vvMakeJSON.py  -o "{jsonFile}" -g "mean:pol1,sigma:pol1,alpha:pol3,n:pol0,alpha2:pol0,n2:pol0" -m 500 -M 4500  {rootFile}  '.format(jsonFile=jsonFile,rootFile=mjjFile+'.root')
-        os.system(cmd)
+
+        if p in ['HP','NP']:    
+            cmd='vvMakeTopMJJMergedConditionalShapes.py -s "{template}" -c "{cut}"  -o "{rootFile}" -v "lnujj_l2_softDrop_mass" -V "lnujj_LV_mass"  -b 60  -x {minMJJ} -X {maxMJJ} -f "meanW:81.9752,sigmaW:9.10,sigmaTop:15.075,alphaW:1.3,alphaW2:1.17,alphaTop:0.622,alphaTop2:1.58" samples'.format(template=template,cut=cut,rootFile=mjjFile,minMJJ=minMJJ,maxMJJ=230)
+            os.system(cmd)
+            cmd='vvMakeJSON.py  -o "{jsonFile}" -g "meanW:pol0,sigmaW:pol0,meanTop:laur3,sigmaTop:pol0,alphaW:pol0,alphaTop:pol0,alphaW2:pol2,alphaTop2:pol0,n:pol0,f:laur5,f2:pol0,slope:pol0" -m 500 -M 5000  {rootFile}  '.format(jsonFile=jsonFile,rootFile=mjjFile+'.root')
+            os.system(cmd)
+
+        else:
+            cmd='vvMakeTopMJJMergedConditionalShapes.py -s "{template}" -c "{cut}"  -o "{rootFile}" -v "lnujj_l2_softDrop_mass" -V "lnujj_LV_mass"  -b 60  -x {minMJJ} -X {maxMJJ} -f "meanW:77.045,sigmaW:8.6,sigmaTop:18.49,alphaTop2:1.069,alphaW2:0.768,alphaTop:0.524,slope:-0.0196,f2:0.952" -e 1 samples'.format(template=template,cut=cut,rootFile=mjjFile,minMJJ=minMJJ,maxMJJ=230)
+            os.system(cmd)
+            cmd='vvMakeJSON.py  -o "{jsonFile}" -g "meanW:pol0,sigmaW:pol0,meanTop:laur3,sigmaTop:pol0,alphaW:laur2,alphaTop:pol0,alphaW2:pol2,alphaTop2:pol0,n:pol0,f:laur5,f2:pol0,slope:pol0" -m 500 -M 5000  {rootFile}  '.format(jsonFile=jsonFile,rootFile=mjjFile+'.root')
+            os.system(cmd)
 
 
 
@@ -292,14 +299,16 @@ def makeNormalizations(name,filename,template,data=0,addCut='',factor=1):
 #makeSignalShapesMJJ("LNuJJ_XWZ",WZTemplate)
 
 
-#makeSignalYields("LNuJJ_XWW",WWTemplate,BRWW)
-#makeSignalYields("LNuJJ_XWZ",WZTemplate,BRWZ)
-#makeSignalYields("LNuJJ_VBFXWW",VBFWWTemplate,BRVBFWW)
+#makeSignalYields("LNuJJ_XWW",WWTemplate,BRWW,{'HP':1.02,'LP':0.8})
+#makeSignalYields("LNuJJ_XWZ",WZTemplate,BRWZ,{'HP':1.02,'LP':0.8})
+####makeSignalYields("LNuJJ_VBFXWW",VBFWWTemplate,BRVBFWW)
 
 
 
-#makeResWMJJShapes("resW","LNuJJ",resWMJJTemplate,cuts['resW'])
-#makeBackgroundShapesMVV("resW","LNuJJ",resWTemplate,cuts['resW'])
+
+
+#makeResTopMJJShapes("resW","LNuJJ",resWMJJTemplate,cuts['resW'])
+makeBackgroundShapesMVV("resW","LNuJJ",resWTemplate,cuts['resW'])
 
 #print 'OK GOING FOR THE 2D ONES'
 
@@ -312,6 +321,6 @@ mergeBackgroundShapes("nonRes","LNuJJ")
 
 
 
-#makeNormalizations("nonRes","LNuJJ",nonResTemplate,0,cuts['nonres'],0.88)
+#makeNormalizations("nonRes","LNuJJ",nonResTemplate,0,cuts['nonres'],1.0)
 #makeNormalizations("resW","LNuJJ",resWTemplate,0,cuts['resW'])
 #makeNormalizations("data","LNuJJ",dataTemplate,1)

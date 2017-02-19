@@ -393,6 +393,35 @@ class Fitter(object):
 
 
 
+    def jetDoublePeak(self,name = 'model',poi='x'):
+        ROOT.gSystem.Load("libHiggsAnalysisCombinedLimit")
+        
+        self.w.factory("meanW[80,75,85]")
+        self.w.factory("sigmaW[10,5,20]")
+        self.w.factory("alphaW[1,0.1,10]")
+        self.w.factory("alphaW2[1,0.1,10]")
+        self.w.factory("n[5]")
+
+        self.w.factory("meanTop[160,140,190]")
+        self.w.factory("sigmaTop[30,5,100]")
+        self.w.factory("alphaTop[1,0.1,10]")
+        self.w.factory("alphaTop2[1,0.1,10]")
+
+
+        peak = ROOT.RooDoubleCB('WPeak','modelS',self.w.var(poi),self.w.var('meanW'),self.w.var('sigmaW'),self.w.var('alphaW'),self.w.var('n'),self.w.var("alphaW2"),self.w.var("n"))
+        getattr(self.w,'import')(peak,ROOT.RooFit.Rename('WPeak'))
+        peak2 = ROOT.RooDoubleCB('TopPeak','modelS',self.w.var(poi),self.w.var('meanTop'),self.w.var('sigmaTop'),self.w.var('alphaTop'),self.w.var('n'),self.w.var("alphaTop2"),self.w.var("n"))
+        getattr(self.w,'import')(peak2,ROOT.RooFit.Rename('TopPeak'))
+        self.w.factory("SUM::"+name+"(f[0.5,0,1]*WPeak,TopPeak)")
+
+    def jetDoublePeakExp(self,name = 'model',poi='x'):
+        ROOT.gSystem.Load("libHiggsAnalysisCombinedLimit")
+        self.jetDoublePeak('modelS',poi)
+        self.w.factory("RooExponential::modelB("+poi+",slope[0,-5,5])")
+        self.w.factory("SUM::"+name+"(f2[0.5,0,1]*modelS,modelB)")
+
+
+
     def jetResonanceCB2(self,name = 'model',poi='x'):
         ROOT.gSystem.Load("libHiggsAnalysisCombinedLimit")
         self.w.factory("mean[80,50,100]")

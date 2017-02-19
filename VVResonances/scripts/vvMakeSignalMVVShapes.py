@@ -21,6 +21,7 @@ parser.add_option("-s","--sample",dest="sample",default='',help="Type of sample"
 parser.add_option("-c","--cut",dest="cut",help="Cut to apply for shape",default='')
 parser.add_option("-o","--output",dest="output",help="Output JSON",default='')
 parser.add_option("-V","--MVV",dest="mvv",help="mVV variable",default='')
+parser.add_option("-f","--scaleFactors",dest="scaleFactors",help="Additional scale factors separated by comma",default='')
 
 (options,args) = parser.parse_args()
 #define output dictionary
@@ -49,18 +50,22 @@ for filename in os.listdir(args[0]):
     print 'found',filename,'mass',str(mass) 
 
 
+
+scaleFactors=options.scaleFactors.split(',')
+
+
 #Now we have the samples: Sort the masses and run the fits
 N=0
 for mass in sorted(samples.keys()):
 
     print 'fitting',str(mass) 
     plotter=TreePlotter(args[0]+'/'+samples[mass]+'.root','tree')
-#    plotter.setupFromFile(args[0]+'/'+samples[mass]+'.pck')
     plotter.addCorrectionFactor('genWeight','tree')
-#    plotter.addCorrectionFactor('xsec','tree')
     plotter.addCorrectionFactor('puWeight','tree')
+    if options.scaleFactors!='':
+        for s in scaleFactors:
+            plotter.addCorrectionFactor(s,'tree')
        
-        
     fitter=Fitter(['MVV'])
     fitter.signalResonance('model','MVV')
     fitter.w.var("MH").setVal(mass)

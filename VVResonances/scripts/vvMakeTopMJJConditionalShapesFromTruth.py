@@ -57,9 +57,9 @@ def runFits(data,options):
 
 
 #    axis=ROOT.TAxis(10,array('d',[600,800,900,1000,1250,1500,2000,2500,3000,3500,4000]))
-    axis=ROOT.TAxis(12,array('d',[600,650,700,750,800,900,1000,1250,1500,2000,2500,3000,3500]))
+    axis=ROOT.TAxis(10,array('d',[600,650,700,750,800,900,1000,1250,1500,2000,2500]))
 
-    graphs={'mean':ROOT.TGraphErrors(),'sigma':ROOT.TGraphErrors(),'alpha':ROOT.TGraphErrors(),'n':ROOT.TGraphErrors(),'alpha2':ROOT.TGraphErrors(),'n2':ROOT.TGraphErrors()}
+    graphs={'mean':ROOT.TGraphErrors(),'sigma':ROOT.TGraphErrors(),'alpha':ROOT.TGraphErrors(),'n':ROOT.TGraphErrors(),'alpha2':ROOT.TGraphErrors(),'n2':ROOT.TGraphErrors(),'f':ROOT.TGraphErrors(),'slope':ROOT.TGraphErrors()}
 
     for i in range(1,axis.GetNbins()+1):
     
@@ -71,18 +71,36 @@ def runFits(data,options):
         fitter.w.var("M").setVal((options.maxx-options.minx)/2.0)
         fitter.w.var("M").setMax(options.maxx)
         fitter.w.var("M").setMin(options.minx)
+        if options.doExp>=0: ##MICHALIS CHANGED IT
+            fitter.jetResonance('model','M')
+            fitter.w.var("slope").setVal(slopeF.Eval(center))
+            fitter.w.var("slope").setMin(-2)
+            fitter.w.var("slope").setMax(2)
+            fitter.w.var("slope").setConstant(0)
+            fitter.w.var("f").setVal(fF.Eval(center))
+            fitter.w.var("f").setMin(0)
+            fitter.w.var("f").setMax(1.)
+            fitter.w.var("f").setConstant(0)
 
-        fitter.jetResonanceNOEXP('model','M')
+
+        else:    
+            fitter.jetResonanceNOEXP('model','M')
+
         fitter.w.var("mean").setVal(meanF.Eval(center))
         fitter.w.var("mean").setMin(meanF.Eval(center)*0.9)
         fitter.w.var("mean").setMax(meanF.Eval(center)*1.1)
         fitter.w.var("sigma").setVal(sigmaF.Eval(center))
-        fitter.w.var("sigma").setMin(sigmaF.Eval(center)*0.8)
-        fitter.w.var("sigma").setMax(sigmaF.Eval(center)*1.2)
-        fitter.w.var("alpha").setVal(alphaF.Eval(center))
+        fitter.w.var("sigma").setMin(sigmaF.Eval(center)*0.5)
+        fitter.w.var("sigma").setMax(sigmaF.Eval(center)*2)
+#        fitter.w.var("alpha").setVal(alphaF.Eval(center))
+        fitter.w.var("alpha").setVal(1.59049)
         fitter.w.var("alpha").setConstant(1)
-        fitter.w.var("alpha2").setVal(alpha2F.Eval(center))
+
+        fitter.w.var("alpha2").setVal(1.3)
         fitter.w.var("alpha2").setConstant(1)
+
+
+#        fitter.w.var("alpha2").setConstant(1)
 
 
 
