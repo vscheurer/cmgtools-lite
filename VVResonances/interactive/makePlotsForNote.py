@@ -5,7 +5,7 @@ from  CMGTools.VVResonances.plotting.CMS_lumi import *
 
 #from start16 import *
 directory='plots16'
-lumi='12900'
+lumi='35900'
 period='2016'
 
 
@@ -197,6 +197,89 @@ def makeTemplates2D(filename,sample,tag):
     c.SaveAs(directory+"/"+sample+"_"+tag+".root")
     c.SaveAs(directory+"/"+sample+"_"+tag+".pdf")
     c.SaveAs(directory+"/"+sample+"_"+tag+".jpg")
+
+def makeTemplatesProjMVV(filename1,filename2,tag):
+    #MJJ
+    f=ROOT.TFile(filename1)
+    hN = f.Get("histo")
+    f2=ROOT.TFile(filename2)
+    hN2 = f2.Get("histo")
+
+
+    c=ROOT.TCanvas("c")
+    c.cd()
+
+    proje1=hN.ProjectionX("q")
+    proje2=hN2.ProjectionX("qq")
+    proje1.SetLineColor(ROOT.kRed)
+    proje2.SetLineColor(ROOT.kBlue)
+
+    proje1.DrawNormalized("HIST")    
+    proje2.DrawNormalized("HIST,SAME")
+    proje1.GetYaxis().SetRangeUser(1e-4,1e+5)
+
+    proje1.GetXaxis().SetTitle("M_{VV} (GeV)")
+    proje1.GetYaxis().SetTitle("a.u")
+    c.SetLogy()   
+    ROOT.gStyle.SetOptTitle(0)
+    ROOT.gStyle.SetOptStat(0)
+
+    l=ROOT.TLegend(0.6,0.6,0.8,0.8)
+    l.AddEntry(proje1,"electrons","l")
+    l.AddEntry(proje2,"muons","l")
+    l.SetBorderSize(0)
+    l.SetFillColor(0)
+    l.Draw()
+
+    c.Update()
+
+
+
+    
+    c.SaveAs(directory+"/"+tag+"ProjMVV.root")
+    c.SaveAs(directory+"/"+tag+"ProjMVV.pdf")
+    c.SaveAs(directory+"/"+tag+"ProjMVV.jpg")
+
+
+
+def makeTemplatesProjMJJ(filename1,filename2,tag):
+    #MJJ
+    f=ROOT.TFile(filename1)
+    hN = f.Get("histo")
+    f2=ROOT.TFile(filename2)
+    hN2 = f2.Get("histo")
+
+
+    c=ROOT.TCanvas("c")
+    c.cd()
+
+    proje1=hN.ProjectionY("q")
+    proje2=hN2.ProjectionY("qq")
+    proje1.SetLineColor(ROOT.kRed)
+    proje2.SetLineColor(ROOT.kBlue)
+
+    proje1.DrawNormalized("HIST")    
+    proje2.DrawNormalized("HIST,SAME")
+
+    proje1.GetXaxis().SetTitle("m_{j} (GeV)")
+    proje1.GetYaxis().SetTitle("a.u")
+
+    ROOT.gStyle.SetOptTitle(0)
+    ROOT.gStyle.SetOptStat(0)
+
+    l=ROOT.TLegend(0.6,0.6,0.8,0.8)
+    l.AddEntry(proje1,"LP","l")
+    l.AddEntry(proje2,"HP","l")
+    l.SetBorderSize(0)
+    l.SetFillColor(0)
+    l.Draw()
+
+    c.Update()
+
+    
+    c.SaveAs(directory+"/"+tag+"ProjMJJ.root")
+    c.SaveAs(directory+"/"+tag+"ProjMJJ.pdf")
+    c.SaveAs(directory+"/"+tag+"ProjMJJ.jpg")
 
 
 
@@ -675,17 +758,28 @@ def makeTopMJJParam(fileW,purity='HP'):
     ROOT.gStyle.SetOptFit(0)
 
     c=ROOT.TCanvas("c")
-    frame=c.DrawFrame(600,60,3500,120)
+    frame=c.DrawFrame(600,60,4000,200)
     frame.GetXaxis().SetTitle("M_{VV} (GeV)")
     frame.GetYaxis().SetTitle("#mu (GeV)")
 
-    g1=FW.Get("mean")
+    g1=FW.Get("meanW")
     g1.SetMarkerColor(ROOT.kRed)
     g1.SetMarkerStyle(20)
     g1.SetMarkerSize(0.8)
     g1.SetLineColor(ROOT.kRed)
     g1.Draw("Psame")
 
+    g2=FW.Get("meanTop")
+    g2.SetMarkerColor(ROOT.kBlue)
+    g2.SetMarkerStyle(20)
+    g2.SetMarkerSize(0.8)
+    g2.SetLineColor(ROOT.kBlue)
+    g2.Draw("Psame")
+
+    l=ROOT.TLegend(0.7,0.7,0.9,0.9)
+    l.AddEntry(g1,"merged W","lp")
+    l.AddEntry(g2,"merged top","lp")
+    l.Draw()
     cmslabel_sim(c,period,11)
     c.SaveAs(directory+"/"+purity+"topMJJParam_mean.pdf")
     c.SaveAs(directory+"/"+purity+"topMJJParam_mean.root")
@@ -693,19 +787,105 @@ def makeTopMJJParam(fileW,purity='HP'):
 
 
     c=ROOT.TCanvas("c")
-    frame=c.DrawFrame(600,0,3500,40)
+    frame=c.DrawFrame(600,0,4000,50)
     frame.GetXaxis().SetTitle("M_{VV} (GeV)")
     frame.GetYaxis().SetTitle("#sigma (GeV)")
 
-    g1=FW.Get("sigma")
+    g1=FW.Get("sigmaW")
+    g1.SetMarkerColor(ROOT.kRed)
+    g1.SetMarkerStyle(20)
+    g1.SetMarkerSize(0.8)
+    g1.SetLineColor(ROOT.kRed)
+    g1.Draw("Psame")
+
+    g2=FW.Get("sigmaTop")
+    g2.SetMarkerColor(ROOT.kBlue)
+    g2.SetMarkerStyle(20)
+    g2.SetMarkerSize(0.8)
+    g2.SetLineColor(ROOT.kBlue)
+    g2.Draw("Psame")
+    l=ROOT.TLegend(0.7,0.7,0.9,0.9)
+    l.AddEntry(g1,"merged W","lp")
+    l.AddEntry(g2,"merged top","lp")
+    l.Draw()
+
+    cmslabel_sim(c,period,11)
+    c.SaveAs(directory+"/"+purity+"topMJJParam_sigma.pdf")
+    c.SaveAs(directory+"/"+purity+"topMJJParam_sigma.root")
+
+
+
+
+    c=ROOT.TCanvas("c")
+    frame=c.DrawFrame(600,0,4000,5)
+    frame.GetXaxis().SetTitle("M_{VV} (GeV)")
+    frame.GetYaxis().SetTitle("#alpha ")
+
+    g1=FW.Get("alphaW")
+    g1.SetMarkerColor(ROOT.kRed)
+    g1.SetMarkerStyle(20)
+    g1.SetMarkerSize(0.8)
+    g1.SetLineColor(ROOT.kRed)
+    g1.Draw("Psame")
+
+    g2=FW.Get("alphaTop")
+    g2.SetMarkerColor(ROOT.kBlue)
+    g2.SetMarkerStyle(20)
+    g2.SetMarkerSize(0.8)
+    g2.SetLineColor(ROOT.kBlue)
+    g2.Draw("Psame")
+    l=ROOT.TLegend(0.7,0.7,0.9,0.9)
+    l.AddEntry(g1,"merged W","lp")
+    l.AddEntry(g2,"merged top","lp")
+    l.Draw()
+
+    cmslabel_sim(c,period,11)
+    c.SaveAs(directory+"/"+purity+"topMJJParam_alpha.pdf")
+    c.SaveAs(directory+"/"+purity+"topMJJParam_alpha.root")
+
+
+    c=ROOT.TCanvas("c")
+    frame=c.DrawFrame(600,0,4000,5)
+    frame.GetXaxis().SetTitle("M_{VV} (GeV)")
+    frame.GetYaxis().SetTitle("#alpha2 ")
+
+    g1=FW.Get("alphaW2")
+    g1.SetMarkerColor(ROOT.kRed)
+    g1.SetMarkerStyle(20)
+    g1.SetMarkerSize(0.8)
+    g1.SetLineColor(ROOT.kRed)
+    g1.Draw("Psame")
+
+    g2=FW.Get("alphaTop2")
+    g2.SetMarkerColor(ROOT.kBlue)
+    g2.SetMarkerStyle(20)
+    g2.SetMarkerSize(0.8)
+    g2.SetLineColor(ROOT.kBlue)
+    g2.Draw("Psame")
+    l=ROOT.TLegend(0.7,0.7,0.9,0.9)
+    l.AddEntry(g1,"merged W","lp")
+    l.AddEntry(g2,"merged top","lp")
+    l.Draw()
+
+    cmslabel_sim(c,period,11)
+    c.SaveAs(directory+"/"+purity+"topMJJParam_alpha2.pdf")
+    c.SaveAs(directory+"/"+purity+"topMJJParam_alpha2.root")
+
+    c=ROOT.TCanvas("c")
+    frame=c.DrawFrame(600,0,4000,1)
+    frame.GetXaxis().SetTitle("M_{VV} (GeV)")
+    frame.GetYaxis().SetTitle("W fraction ")
+
+    g1=FW.Get("f")
     g1.SetMarkerColor(ROOT.kRed)
     g1.SetMarkerStyle(20)
     g1.SetMarkerSize(0.8)
     g1.SetLineColor(ROOT.kRed)
     g1.Draw("Psame")
     cmslabel_sim(c,period,11)
-    c.SaveAs(directory+"/"+purity+"topMJJParam_sigma.pdf")
-    c.SaveAs(directory+"/"+purity+"topMJJParam_sigma.root")
+    c.SaveAs(directory+"/"+purity+"topMJJParam_f.pdf")
+    c.SaveAs(directory+"/"+purity+"topMJJParam_f.root")
+
 
 
 
@@ -1000,7 +1180,7 @@ def makeKernelScaleResolution(filename,histoname):
 #makeShapeUncertaintiesMVV("LNUJJ_2016/LNuJJ_MVVHist_Wjets_mu_HP.root","Wjets","mu","widthSyst")
 
 
-for c in ['nob','vbf']:
+for c in ['nob']:
     if c=='vbf':
         pur=['NP']
     else:
@@ -1009,16 +1189,18 @@ for c in ['nob','vbf']:
         for l in ['mu','e']:
 #            makeTemplates2D("LNuJJ_nonRes_2D_"+l+"_"+p+"_"+c+".root","template_nonRes",l+"_"+p+"_"+c)
 #            makeTemplates1D("LNuJJ_resW_MVV_"+l+"_"+p+"_"+c+".root","template_resW",l+"_"+p+"_"+c)
-            makeShapeUncertaintiesProj2D("LNuJJ_nonRes_2D_"+l+"_"+p+"_"+c+".root","systs_nonRes_"+l+"_"+p+"_"+c,"ScaleX")
-            makeShapeUncertaintiesProj2D("LNuJJ_nonRes_2D_"+l+"_"+p+"_"+c+".root","systs_nonRes_"+l+"_"+p+"_"+c,"ScaleY")
-            makeShapeUncertaintiesProj2D("LNuJJ_nonRes_2D_"+l+"_"+p+"_"+c+".root","systs_nonRes_"+l+"_"+p+"_"+c,"PTX")
-            makeShapeUncertaintiesProj2D("LNuJJ_nonRes_2D_"+l+"_"+p+"_"+c+".root","systs_nonRes_"+l+"_"+p+"_"+c,"PTY")
+#            makeShapeUncertaintiesProj2D("LNuJJ_nonRes_2D_"+l+"_"+p+"_"+c+".root","systs_nonRes_"+l+"_"+p+"_"+c,"ScaleX")
+#            makeShapeUncertaintiesProj2D("LNuJJ_nonRes_2D_"+l+"_"+p+"_"+c+".root","systs_nonRes_"+l+"_"+p+"_"+c,"ScaleY")
+#            makeShapeUncertaintiesProj2D("LNuJJ_nonRes_2D_"+l+"_"+p+"_"+c+".root","systs_nonRes_"+l+"_"+p+"_"+c,"PTX")
+#            makeShapeUncertaintiesProj2D("LNuJJ_nonRes_2D_"+l+"_"+p+"_"+c+".root","systs_nonRes_"+l+"_"+p+"_"+c,"PTY")
             continue;
 
+#makeTemplatesProjMVV("LNuJJ_nonRes_2D_e_HP_nob.root","LNuJJ_nonRes_2D_mu_HP_nob.root","template_nonRes")
+#makeTemplatesProjMJJ("LNuJJ_nonRes_2D_mu_LP_nob.root","LNuJJ_nonRes_2D_mu_HP_nob.root","template_nonRes")
 
 
-#makeTopMJJParam('LNuJJ_MJJ_resW_HP.root','HP')
-#makeTopMJJParam('LNuJJ_MJJ_resW_LP.root','LP')
+makeTopMJJParam('LNuJJ_MJJ_resW_HP.root','HP')
+makeTopMJJParam('LNuJJ_MJJ_resW_LP.root','LP')
 #makeTopMJJParam('LNuJJ_MJJ_resW_NP.root','NP')
             
 #makeGOF("GOFToys.root",9534.22)

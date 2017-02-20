@@ -76,7 +76,8 @@ def runFits(data,options):
         fitter.importBinnedData(histo,['M'],'data')   
         fitter.fit('model','data',[ROOT.RooFit.SumW2Error(1),ROOT.RooFit.Minos(0)])
         fitter.fit('model','data',[ROOT.RooFit.SumW2Error(1),ROOT.RooFit.Minos(1)])
-        chi=fitter.projection("model","data","M","debugfitMJJTop_"+options.output+"_"+str(i)+".png")
+        chi=fitter.projection("model","data","M","debugfitMJJTop_"+options.output+"_"+str(i)+".png","m_{j} (GeV)")
+        chi=fitter.projection("model","data","M","debugfitMJJTop_"+options.output+"_"+str(i)+".pdf","m_{j} (GeV)")
     
         for var,graph in graphs.iteritems():
             value,error=fitter.fetch(var)
