@@ -794,6 +794,19 @@ class DataCardMaker:
         self.contributions.append({'name':name,'pdf':pdfName,'ID':ID,'yield':1.0})
 
 
+
+    def addParametricYieldWithUncertainty(self,name,ID,jsonFile,constant,uncertaintyName,uncertaintyFormula,uncertaintyValue):
+        f=open(jsonFile)
+        info=json.load(f)
+        pdfName="_".join([name,self.tag])
+        pdfNorm="_".join([name,self.tag,"norm"])
+        self.w.factory(uncertaintyName+'[0,-1,1]')
+        self.w.factory("expr::{name}('({param})*{lumi}*({constant}+{unc}*{form})',MH,{lumi},{unc})".format(name=pdfNorm,param=info['yield'],lumi=self.physics+"_"+self.period+"_lumi",constant=constant,unc=uncertaintyName,form=uncertaintyFormula))
+        self.addSystematic(uncertaintyName,"param",[0,uncertaintyValue])
+        f.close()
+        self.contributions.append({'name':name,'pdf':pdfName,'ID':ID,'yield':1.0})
+
+
     def addParametricYieldWithCrossSection(self,name,ID,jsonFile,jsonFileCS,sigmaStr,BRStr):
         ROOT.gSystem.Load("libHiggsAnalysisCombinedLimit")
         from array import array
@@ -820,6 +833,79 @@ class DataCardMaker:
         pdfNorm="_".join([name,self.tag,"norm"])
         self.w.factory("expr::{name}('({param})*{lumi}*({sigma})',MH,{lumi},{sigma})".format(name=pdfNorm,param=info['yield'],lumi=self.physics+"_"+self.period+"_lumi",sigma=pdfSigma))       
         f.close()
+        self.contributions.append({'name':name,'pdf':pdfName,'ID':ID,'yield':1.0})
+
+    def addParametricYieldWithCrossSectionAndUncertainties(self,name,ID,jsonFile,jsonFileCS,sigmaStr,BRStr,sigmaStrP,sigmaStrM,constant,uncertaintyName,uncertaintyFormula,uncertaintyValue):
+        ROOT.gSystem.Load("libHiggsAnalysisCombinedLimit")
+        from array import array
+        #first load cross section
+        fCS=open(jsonFileCS)
+        info=json.load(fCS)
+        xArr=[]
+        yArr=[]
+        yErrArr=[]
+
+        for m in sorted(map(float,info.keys())):
+            xArr.append(float(m))
+            #I know this is stupid 
+            yArr.append(float(info[str(int(m))][sigmaStr])*float(info[str(int(m))][BRStr]))
+            yErrArr.append(0.5*(float(info[str(int(m))][sigmaStrP])-float(info[str(int(m))][sigmaStrM]))/float(info[str(int(m))][sigmaStr]))
+
+        pdfSigma="_".join([name,self.tag,"sigma"])
+        spline=ROOT.RooSpline1D(pdfSigma,pdfSigma,self.w.var("MH"),len(xArr),array('d',xArr),array('d',yArr))    
+        getattr(self.w,'import')(spline,ROOT.RooFit.Rename(pdfSigma))
+
+        pdfErrSigma="_".join([name,self.tag,"sigmaErr"])
+        splineErr=ROOT.RooSpline1D(pdfErrSigma,pdfErrSigma,self.w.var("MH"),len(xArr),array('d',xArr),array('d',yErrArr))    
+        getattr(self.w,'import')(splineErr,ROOT.RooFit.Rename(pdfErrSigma))
+        fCS.close()
+
+        f=open(jsonFile)
+        info=json.load(f)      
+        pdfName="_".join([name,self.tag])
+        pdfNorm="_".join([name,self.tag,"norm"])
+
+        self.w.factory("sigmaUnc[-3,3]")
+        self.w.factory(uncertaintyName+'[0,-1,1]')
+
+        self.w.factory("expr::{name}('({param})*{lumi}*({sigma})*(1+sigmaUnc*{sigmaErr})*({constant}+{unc}*{form})',MH,{lumi},{sigma},{sigmaErr},sigmaUnc,{unc})".format(name=pdfNorm,param=info['yield'],lumi=self.physics+"_"+self.period+"_lumi",sigma=pdfSigma,sigmaErr=pdfErrSigma,constant=constant,unc=uncertaintyName,form=uncertaintyFormula))       
+        f.close()
+        self.addSystematic('sigmaUnc',"param",[0,1])
+        self.addSystematic(uncertaintyName,"param",[0,uncertaintyValue])
+        self.contributions.append({'name':name,'pdf':pdfName,'ID':ID,'yield':1.0})
+
+
+
+    def addParametricYieldHVTBR(self,name,ID,jsonFile,jsonFileCS,BRStr,constant,uncertaintyName,uncertaintyFormula,uncertaintyValue):
+        print 'I will only assume the BRs from HVT and float the cross section'
+        ROOT.gSystem.Load("libHiggsAnalysisCombinedLimit")
+        from array import array
+        #first load cross section
+        fCS=open(jsonFileCS)
+        info=json.load(fCS)
+        xArr=[]
+        yArr=[]
+        yErrArr=[]
+
+        for m in sorted(map(float,info.keys())):
+            xArr.append(float(m))
+            #I know this is stupid 
+            yArr.append(float(info[str(int(m))][BRStr]))
+
+        pdfSigma="_".join([name,self.tag,"sigma"])
+        spline=ROOT.RooSpline1D(pdfSigma,pdfSigma,self.w.var("MH"),len(xArr),array('d',xArr),array('d',yArr))    
+        getattr(self.w,'import')(spline,ROOT.RooFit.Rename(pdfSigma))
+
+        f=open(jsonFile)
+        info=json.load(f)      
+        pdfName="_".join([name,self.tag])
+        pdfNorm="_".join([name,self.tag,"norm"])
+
+        self.w.factory(uncertaintyName+'[0,-1,1]')
+
+        self.w.factory("expr::{name}('({param})*{lumi}*({sigma})*({constant}+{unc}*{form})',MH,{lumi},{sigma},{unc})".format(name=pdfNorm,param=info['yield'],lumi=self.physics+"_"+self.period+"_lumi",sigma=pdfSigma,constant=constant,unc=uncertaintyName,form=uncertaintyFormula))       
+        f.close()
+        self.addSystematic(uncertaintyName,"param",[0,uncertaintyValue])
         self.contributions.append({'name':name,'pdf':pdfName,'ID':ID,'yield':1.0})
 
 

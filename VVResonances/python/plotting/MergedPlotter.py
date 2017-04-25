@@ -15,6 +15,12 @@ class MergedPlotter(PlotterBase):
             plotter.applySmoothing()
 
 
+    def scan(self,var,cut):
+        for plotter in self.plotters:
+            plotter.tree.SetScanField(0)
+            plotter.tree.Scan(var,cut,"colsize=20")
+
+
     def drawTH1(self,var,cuts,lumi,bins,min,max,titlex = "",units = "",drawStyle = "HIST"):
         h=None
         for plotter in self.plotters:

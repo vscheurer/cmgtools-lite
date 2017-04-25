@@ -118,7 +118,7 @@ def compare(p1,p2,var,cut1,cut2,bins,mini,maxi,title,unit,leg1,leg2):
 
 cuts={}
 
-cuts['common'] = '(HLT_MU||HLT_ELE||HLT_ISOMU||HLT_ISOELE||HLT_MET120)*(Flag_goodVertices&&Flag_CSCTightHaloFilter&&Flag_HBHENoiseFilter&&Flag_HBHENoiseIsoFilter&&Flag_eeBadScFilter&&lnujj_nOtherLeptons==0&&lnujj_l2_softDrop_mass>0&&lnujj_LV_mass>600&&Flag_badChargedHadronFilter&&Flag_badMuonFilter)'
+cuts['common'] = '(((HLT_MU)&&(abs(lnujj_l1_l_pdgId)==13))||((HLT_ELE)&&abs(lnujj_l1_l_pdgId)==11)||HLT_MET120)*(Flag_goodVertices&&Flag_CSCTightHaloFilter&&Flag_HBHENoiseFilter&&Flag_HBHENoiseIsoFilter&&Flag_eeBadScFilter&&lnujj_nOtherLeptons==0&&lnujj_l2_softDrop_mass>0&&lnujj_LV_mass>600&&Flag_badChargedHadronFilter&&Flag_badMuonFilter&&Flag_globalTightHalo2016Filter)'
 
 
 cuts['mu'] = '(abs(lnujj_l1_l_pdgId)==13)'

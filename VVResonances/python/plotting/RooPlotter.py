@@ -301,6 +301,7 @@ class RooPlotter(object):
         
 
         self.frame.Draw("AH")
+#        self.frame.Draw("")
 
         self.stack.Draw("A,HIST,SAME")
         if log:

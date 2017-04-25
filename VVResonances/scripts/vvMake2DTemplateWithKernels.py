@@ -82,29 +82,30 @@ def conditional(hist):
         for j in range(1,hist.GetNbinsX()+1):
             hist.SetBinContent(j,i,hist.GetBinContent(j,i)/integral)
 
-def smoothTailOLD(hist):
+def smoothTail(hist):
+    hist.Scale(1.0/hist.Integral())
     expo=ROOT.TF1("expo","expo",1000,8000)
 #    expo=ROOT.TF1("expo","[0]*(1-pow(x/13000.,[1]))/pow(x/13000.0,[2]+0.0*TMath::Log(x/13000.0))",1000,8000)
-#    expo.SetParameters(1,1,1)
-#    expo.SetParLimits(0,0,1e+20)
-#    expo.SetParLimits(1,0,100)
-#    expo.SetParLimits(2,0,100)
+#    expo.SetParameters(1,-)
+#    expo.SetParLimits(0,0,1)
+#    expo.SetParLimits(1,0.1,100)
+#    expo.SetParLimits(2,0.1,100)
 
     for i in range(1,hist.GetNbinsY()+1):
         proj=hist.ProjectionX("q",i,i)
-        for j in range(1,proj.GetNbinsX()+1):
-            if proj.GetBinContent(j)/proj.Integral()<0.0005:
-                proj.SetBinError(j,1.8)
-        proj.Fit(expo,"","",1700,8000)
-        proj.Fit(expo,"","",1700,8000)
+#        for j in range(1,proj.GetNbinsX()+1):
+#            if proj.GetBinContent(j)/proj.Integral()<0.0005:
+#                proj.SetBinError(j,1.8)
+        proj.Fit(expo,"","",2000,8000)
+        proj.Fit(expo,"","",2000,8000)
         for j in range(1,hist.GetNbinsX()+1):
             x=hist.GetXaxis().GetBinCenter(j)
-            if x>2000:
+            if x>2500:
                 hist.SetBinContent(j,i,expo.Eval(x))
 
 
 
-def smoothTail(hist,bini=30):
+def smoothTailOLD(hist,bini=30):
     expo=ROOT.TF1("expo","expo",1000,8000)
 #    expo=ROOT.TF1("expo","[0]*((1-x/13000.0)^[1])/(x/13000.0)^([2]+[3]*log(x))",1000,8000)
 #    expo.SetParameters(1,1,1,0)
@@ -118,7 +119,7 @@ def smoothTail(hist,bini=30):
     if proje.Integral()==0.0:
         return
     for j in range(1,proje.GetNbinsX()+1):
-        if proje.GetBinContent(j)/proje.Integral()<0.0005:
+        if proje.GetBinContent(j)/proje.Integral()<0.0002:
             proje.SetBinError(j,1.8)
 
 #    proje.Fit(expo,"","",1400,8000)
@@ -201,7 +202,7 @@ binsx=[]
 for i in range(0,options.binsx+1):
     binsx.append(options.minx+i*(options.maxx-options.minx)/options.binsx)
 
-binsy=[0,10.,20.,30.,40.,50.,60.,70.,80.,90.,100.,120.,140.,150.,160.,190.,210.,240.]    
+binsy=[30.,40.,50.,60.,70.,80.,90.,100.,110.,120.,140.,150.,160.,180.,210.]    
 
 
 ###Make res up and down

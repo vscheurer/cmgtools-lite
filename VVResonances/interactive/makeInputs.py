@@ -7,7 +7,7 @@ import os
 cuts={}
 
 
-cuts['common'] = '((HLT_MU||HLT_ELE||HLT_ISOMU||HLT_ISOELE||HLT_MET120)*(run>500) + (run<500)*lnujj_sf)*(Flag_goodVertices&&Flag_CSCTightHaloFilter&&Flag_HBHENoiseFilter&&Flag_HBHENoiseIsoFilter&&Flag_eeBadScFilter&&lnujj_nOtherLeptons==0&&lnujj_l2_softDrop_mass>0&&lnujj_LV_mass>0&&Flag_badChargedHadronFilter&&Flag_badMuonFilter)'
+cuts['common'] = '((HLT_MU||HLT_ELE||HLT_ISOMU||HLT_ISOELE||HLT_MET120)*(run>500) + (run<500)*lnujj_sf)*(Flag_goodVertices&&Flag_globalTightHalo2016Filter&&Flag_HBHENoiseFilter&&Flag_HBHENoiseIsoFilter&&Flag_eeBadScFilter&&lnujj_nOtherLeptons==0&&lnujj_l2_softDrop_mass>0&&lnujj_LV_mass>0&&Flag_badChargedHadronFilter&&Flag_badMuonFilter)'
 
 
 cuts['mu'] = '(abs(lnujj_l1_l_pdgId)==13)'
@@ -39,7 +39,8 @@ WZTemplate="WprimeToWZToWlepZhad_narrow"
 BRWZ=0.327*0.6991
 
 WHTemplate="WprimeToWhToWlephbb"
-BRWH=0.577*0.327
+#BRWH=0.59*0.327
+BRWH=0.327
 
 dataTemplate="SingleMuon,SingleElectron,MET"
 resWTemplate="TT_pow,WWTo1L1Nu2Q"
@@ -52,7 +53,7 @@ nonResTemplate="WJetsToLNu_HT,TT_pow,DYJetsToLL_M50_HT"
 minMJJ=30.0
 maxMJJ=210.0
 
-minMVV=600.0
+minMVV=800.0
 maxMVV=5000.0
 
 binsMJJ=90
@@ -60,10 +61,10 @@ binsMVV=168
 
 
 cuts['acceptance']= "(lnujj_LV_mass>{minMVV}&&lnujj_LV_mass<{maxMVV}&&lnujj_l2_softDrop_mass>{minMJJ}&&lnujj_l2_softDrop_mass<{maxMJJ})".format(minMVV=minMVV,maxMVV=maxMVV,minMJJ=minMJJ,maxMJJ=maxMJJ)
-cuts['acceptanceGEN']= "(lnujj_l2_gen_softDrop_mass>{minMJJ}&&lnujj_l2_gen_softDrop_mass<{maxMJJ}&&lnujj_gen_partialMass>{minMVV}&&lnujj_gen_partialMass<{maxMVV})".format(minMJJ=25,maxMJJ=300,minMVV=500,maxMVV=10000)                
+cuts['acceptanceGEN']= "(lnujj_l2_gen_softDrop_mass>{minMJJ}&&lnujj_l2_gen_softDrop_mass<{maxMJJ}&&lnujj_gen_partialMass>{minMVV}&&lnujj_gen_partialMass<{maxMVV})".format(minMJJ=25,maxMJJ=300,minMVV=700,maxMVV=10000)                
 #cuts['acceptanceGEN']= "(lnujj_l2_gen_softDrop_mass>0&&lnujj_gen_partialMass>0)"
 
-cuts['acceptanceGENMVV']= "(lnujj_gen_partialMass>{minMVV}&&lnujj_gen_partialMass<{maxMVV})".format(minMVV=400,maxMVV=5000)
+cuts['acceptanceGENMVV']= "(lnujj_gen_partialMass>{minMVV}&&lnujj_gen_partialMass<{maxMVV})".format(minMVV=700,maxMVV=5000)
 cuts['acceptanceGENMJJ']= "(lnujj_l2_gen_softDrop_mass>{minMJJ}&&lnujj_l2_gen_softDrop_mass<{maxMJJ}&&lnujj_LV_mass>{minMVV}&&lnujj_LV_mass<{maxMVV})".format(minMJJ=minMJJ-5,maxMJJ=maxMJJ+5,minMVV=minMVV,maxMVV=maxMVV)
 cuts['acceptanceMJJ']= "(lnujj_l2_softDrop_mass>{minMJJ}&&lnujj_l2_softDrop_mass<{maxMJJ})".format(minMJJ=minMJJ,maxMJJ=maxMJJ)                
 
@@ -99,6 +100,27 @@ def makeSignalShapesMJJ(filename,template):
         os.system(cmd)
 
 
+
+def makeHiggsShapesMJJ(filename,template):
+    for p in purities:
+        cut='*'.join([cuts['common'],cuts[p]])
+        rootFile=filename+"_MJJ_"+p+".root"
+        doExp=1
+        if p=='HP' or p=='NP':
+            doExp=0
+        cmd='vvMakeSignalMJJShapes.py -s "{template}" -c "{cut}"  -o "{rootFile}" -V "lnujj_l2_softDrop_mass" -m {minMJJ} -M {maxMJJ} -e {doExp} -f "" samples'.format(template=template,cut=cut,rootFile=rootFile,minMJJ=minMJJ,maxMJJ=maxMJJ,doExp=doExp)
+        os.system(cmd)
+        jsonFile=filename+"_MJJ_"+p+".json"
+
+        if p=='HP' or p=='NP':
+            cmd='vvMakeJSON.py  -o "{jsonFile}" -g "mean:pol4,sigma:pol4,alpha:pol3,n:pol0,alpha2:pol3,n2:pol0,slope:pol0,f:pol0" -m 601 -M 5000  {rootFile}  '.format(jsonFile=jsonFile,rootFile=rootFile)
+        else:
+            cmd='vvMakeJSON.py  -o "{jsonFile}" -g "mean:pol3,sigma:pol1,alpha:pol0,n:pol0,slope:pol1,f:laur4,alpha2:pol0,n2:pol0" -m 601 -M 5000  {rootFile}  '.format(jsonFile=jsonFile,rootFile=rootFile)
+
+        os.system(cmd)
+
+
+
 def makeSignalYields(filename,template,branchingFraction,sfP = {'HP':1.0,'LP':1.0}):
     for region in categories:
         if region=='vbf':
@@ -111,7 +133,7 @@ def makeSignalYields(filename,template,branchingFraction,sfP = {'HP':1.0,'LP':1.
                 cut = "*".join([cuts[lepton],cuts[purity],cuts['common'],cuts[region],cuts['acceptance'],str(sfP[purity])])
                 #Signal yields
                 yieldFile=filename+"_"+lepton+"_"+purity+"_"+region+"_yield"
-                cmd='vvMakeSignalYields.py -s {template} -c "{cut}" -o {output} -V "lnujj_LV_mass" -m {minMVV} -M {maxMVV} -f "pol5" -b {BR} -x 800 samples'.format(template=template, cut=cut, output=yieldFile,minMVV=minMVV,maxMVV=maxMVV,BR=branchingFraction)
+                cmd='vvMakeSignalYields.py -s {template} -c "{cut}" -o {output} -V "lnujj_LV_mass" -m {minMVV} -M {maxMVV} -f "pol5" -b {BR} -x 950 samples'.format(template=template, cut=cut, output=yieldFile,minMVV=minMVV,maxMVV=maxMVV,BR=branchingFraction)
                 os.system(cmd)
 
 
@@ -291,17 +313,21 @@ def makeNormalizations(name,filename,template,data=0,addCut='',factor=1):
 
 
 
-#makeSignalShapesMVV("LNuJJ_XWW",WWTemplate)
+makeSignalShapesMVV("LNuJJ_XWW",WWTemplate)
 #makeSignalShapesMVV("LNuJJ_XWZ",WZTemplate)
+#makeSignalShapesMVV("LNuJJ_XWH",WHTemplate)
 
 
 #makeSignalShapesMJJ("LNuJJ_XWW",WWTemplate)
 #makeSignalShapesMJJ("LNuJJ_XWZ",WZTemplate)
+#makeHiggsShapesMJJ("LNuJJ_XWH",WHTemplate)
 
 
-#makeSignalYields("LNuJJ_XWW",WWTemplate,BRWW,{'HP':1.02,'LP':0.8})
-#makeSignalYields("LNuJJ_XWZ",WZTemplate,BRWZ,{'HP':1.02,'LP':0.8})
-####makeSignalYields("LNuJJ_VBFXWW",VBFWWTemplate,BRVBFWW)
+makeSignalYields("LNuJJ_XWW",WWTemplate,BRWW,{'HP':1.03,'LP':0.95})
+#makeSignalYields("LNuJJ_XWZ",WZTemplate,BRWZ,{'HP':1.03,'LP':0.95})
+#makeSignalYields("LNuJJ_XWH",WHTemplate,BRWH,{'HP':1.03,'LP':0.95})
+
+###makeSignalYields("LNuJJ_VBFXWW",VBFWWTemplate,BRVBFWW)
 
 
 

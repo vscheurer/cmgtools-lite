@@ -157,25 +157,38 @@ def makeShapeUncertaintiesProj2D(filename,sample,syst):
     
     c=ROOT.TCanvas("c")
     c.cd()
-    hN.ProjectionX("a").DrawNormalized("HIST")
-    hN.GetYaxis().SetRangeUser(1e-5,1000)
-    hU.ProjectionX("b").DrawNormalized("HIST,SAME")
-    hD.ProjectionX("c").DrawNormalized("HIST,SAME")
-    c.SetLogy()
+    proje1=hN.ProjectionX("qqq")
+    proje1.DrawNormalized("HIST")
+    proje1.SetLineColor(ROOT.kBlack)
+    proje1.GetYaxis().SetRangeUser(0,8)
+
+    proje2=hU.ProjectionX("qqqq")
+    proje2.SetLineColor(ROOT.kRed)
+    proje2.DrawNormalized("HIST,SAME")
+
+    proje3=hD.ProjectionX("qqqqq")
+    proje3.SetLineColor(ROOT.kBlue)
+    proje3.DrawNormalized("HIST,SAME")
     c.SaveAs(directory+"/"+sample+"_"+syst+"ProjX.root")
     c.SaveAs(directory+"/"+sample+"_"+syst+"ProjX.pdf")
     c.SaveAs(directory+"/"+sample+"_"+syst+"ProjX.jpg")
 
+
     c2=ROOT.TCanvas("c2")
     c2.cd()
-    hN.ProjectionY("e").DrawNormalized("HIST")
-    hN.GetYaxis().SetRangeUser(0,1)
-    hU.ProjectionY("f").DrawNormalized("HIST,SAME")
-    hD.ProjectionY("g").DrawNormalized("HIST,SAME")
+    proje4=hN.ProjectionY("qqqa")
+    proje4.DrawNormalized("HIST")
+    proje4.SetLineColor(ROOT.kBlack)
+    proje4.GetYaxis().SetRangeUser(0,0.8)
+    proje5=hU.ProjectionY("qqqqa")
+    proje5.SetLineColor(ROOT.kRed)
+    proje5.DrawNormalized("HIST,SAME")
+    proje6=hD.ProjectionY("qqqqqa")
+    proje6.SetLineColor(ROOT.kBlue)
+    proje6.DrawNormalized("HIST,SAME")
     c2.SaveAs(directory+"/"+sample+"_"+syst+"ProjY.root")
     c2.SaveAs(directory+"/"+sample+"_"+syst+"ProjY.pdf")
     c2.SaveAs(directory+"/"+sample+"_"+syst+"ProjY.jpg")
-
 
     
 
@@ -1101,6 +1114,107 @@ def compare1D(contrib,tag, var="MVV"):
 
 
 
+def makeBias():
+
+    import numpy
+    def median(lst):
+        return numpy.median(numpy.array(lst))
+
+    def getBias(filename,rValue):
+        f=ROOT.TFile(filename)
+        tree=f.Get("tree_fit_sb")
+        bias=[]
+        for event in tree:
+            if event.muErr==0.0:
+                continue
+            b = (event.mu-rValue)/event.muErr
+            if abs(event.mu-rValue)/event.muErr>0.45:
+                continue
+            bias.append(b)
+        return  median(bias)   
+
+    def makePull(filename,rValue):
+        f=ROOT.TFile(filename)
+        tree=f.Get("tree_fit_sb")
+        bias=[]
+        h=ROOT.TH1F("pull","pull",10,-5,5)
+        h.Sumw2()
+        for event in tree:
+            if event.muErr==0.0:
+                continue
+            b = (event.mu-rValue)/event.muErr
+            h.Fill(b)        
+        c=ROOT.TCanvas("pull","pull")
+        c.cd()
+        h.Draw()
+        h.GetXaxis().SetTitle("pull")
+        h.GetYaxis().SetTitle("toys")
+        h.Fit("gaus")
+        ROOT.gStyle.SetOptFit(111111)
+        c.SaveAs("pull_"+filename)
+        c.SaveAs(("pull_"+filename).replace("root","png"))
+        c.SaveAs(("pull_"+filename).replace("root","pdf"))
+        
+    rValue={1000:{'r':0.04,'2r':0.08,'r_freq':0.04,'2r_freq':0.08},\
+            1500:{'r':0.01,'2r':0.02,'r_freq':0.01,'2r_freq':0.02},\
+            2000:{'r':5e-3,'2r':0.01,'r_freq':5e-3,'2r_freq':0.01},\
+            2500:{'r':3e-3,'2r':6e-3,'r_freq':3e-3,'2r_freq':6e-3},\
+            3000:{'r':2e-3,'2r':4e-3,'r_freq':2e-3,'2r_freq':4e-3},\
+            4000:{'r':7e-4,'2r':1.4e-3,'r_freq':7e-4,'2r_freq':1.4e-3}}
+   
+
+    graphs={}
+    for graphName in ['r','2r','r_freq','2r_freq']: 
+        graphs[graphName] = ROOT.TGraph()
+        graphs[graphName].SetName("graph_"+graphName)
+        g = graphs[graphName]
+        for i,mass in enumerate([1000,1500,2000,2500,3000,4000]):
+            bias = getBias("biasTests_"+str(mass)+"_"+graphName+".root",rValue[mass][graphName])
+            makePull("biasTests_"+str(mass)+"_"+graphName+".root",rValue[mass][graphName])
+            g.SetPoint(i,mass,bias)
+            
+    c=ROOT.TCanvas("c")
+    graphs['r'].Draw("ALP")
+    graphs['r'].GetXaxis().SetTitle("injected mass (GeV)")
+    graphs['r'].GetYaxis().SetTitle("median pull")
+    
+    graphs['r'].GetYaxis().SetRangeUser(-0.05,0.05)
+    graphs['r'].SetLineColor(ROOT.kRed)
+    graphs['r'].SetMarkerColor(ROOT.kRed)
+    graphs['r'].SetLineWidth(3)
+    graphs['r'].SetMarkerStyle(20)
+
+    graphs['2r'].Draw("PLsame")
+    graphs['2r'].SetLineColor(ROOT.kBlue)
+    graphs['2r'].SetMarkerColor(ROOT.kBlue)
+    graphs['2r'].SetLineWidth(3)
+    graphs['2r'].SetMarkerStyle(20)
+
+
+    l=ROOT.TLegend(0.5,0.55,0.9,0.85)
+    l.AddEntry(graphs['r'],"r=excluded (pre-fit toys)","lp")
+    l.AddEntry(graphs['2r'],"r=2excluded (pre-fit toys)","lp")
+    l.AddEntry(graphs['r_freq'],"r=excluded (post-fit toys)","lp")
+    l.AddEntry(graphs['2r_freq'],"r=2excluded (post-fit toys)","lp")
+    l.Draw()
+    l.SetBorderSize(0)
+    graphs['r_freq'].Draw("PLsame")
+    graphs['r_freq'].SetLineColor(ROOT.kRed)
+    graphs['r_freq'].SetMarkerColor(ROOT.kRed)
+    graphs['r_freq'].SetLineWidth(3)
+    graphs['r_freq'].SetLineStyle(3)
+    graphs['r_freq'].SetMarkerStyle(20)
+
+    graphs['2r_freq'].Draw("PLsame")
+    graphs['2r_freq'].SetLineColor(ROOT.kBlue)
+    graphs['2r_freq'].SetMarkerColor(ROOT.kBlue)
+    graphs['2r_freq'].SetLineWidth(3)
+    graphs['2r_freq'].SetLineStyle(3)
+    graphs['2r_freq'].SetMarkerStyle(20)
+
+    c.SaveAs("plots16/biasTests.root")
+    c.SaveAs("plots16/biasTests.pdf")
+
 
 
 def makeKernelScaleResolution(filename,histoname):
@@ -1187,23 +1301,29 @@ for c in ['nob']:
         pur=['HP','LP']
     for p in pur:
         for l in ['mu','e']:
+            continue
 #            makeTemplates2D("LNuJJ_nonRes_2D_"+l+"_"+p+"_"+c+".root","template_nonRes",l+"_"+p+"_"+c)
 #            makeTemplates1D("LNuJJ_resW_MVV_"+l+"_"+p+"_"+c+".root","template_resW",l+"_"+p+"_"+c)
-#            makeShapeUncertaintiesProj2D("LNuJJ_nonRes_2D_"+l+"_"+p+"_"+c+".root","systs_nonRes_"+l+"_"+p+"_"+c,"ScaleX")
-#            makeShapeUncertaintiesProj2D("LNuJJ_nonRes_2D_"+l+"_"+p+"_"+c+".root","systs_nonRes_"+l+"_"+p+"_"+c,"ScaleY")
 #            makeShapeUncertaintiesProj2D("LNuJJ_nonRes_2D_"+l+"_"+p+"_"+c+".root","systs_nonRes_"+l+"_"+p+"_"+c,"PTX")
+#@            makeShapeUncertaintiesProj2D("LNuJJ_nonRes_2D_"+l+"_"+p+"_"+c+".root","systs_nonRes_"+l+"_"+p+"_"+c,"OPTX")
 #            makeShapeUncertaintiesProj2D("LNuJJ_nonRes_2D_"+l+"_"+p+"_"+c+".root","systs_nonRes_"+l+"_"+p+"_"+c,"PTY")
-            continue;
+#            makeShapeUncertaintiesProj2D("LNuJJ_nonRes_2D_"+l+"_"+p+"_"+c+".root","systs_nonRes_"+l+"_"+p+"_"+c,"OPTY")
+#            makeShapeUncertainties2D("LNuJJ_nonRes_2D_"+l+"_"+p+"_"+c+".root","systs_nonRes_"+l+"_"+p+"_"+c,"PTX")
+#            makeShapeUncertainties2D("LNuJJ_nonRes_2D_"+l+"_"+p+"_"+c+".root","systs_nonRes_"+l+"_"+p+"_"+c,"OPTX")
+#            makeShapeUncertainties2D("LNuJJ_nonRes_2D_"+l+"_"+p+"_"+c+".root","systs_nonRes_"+l+"_"+p+"_"+c,"PTY")
+#            makeShapeUncertainties2D("LNuJJ_nonRes_2D_"+l+"_"+p+"_"+c+".root","systs_nonRes_"+l+"_"+p+"_"+c,"OPTY")
+
 
 #makeTemplatesProjMVV("LNuJJ_nonRes_2D_e_HP_nob.root","LNuJJ_nonRes_2D_mu_HP_nob.root","template_nonRes")
 #makeTemplatesProjMJJ("LNuJJ_nonRes_2D_mu_LP_nob.root","LNuJJ_nonRes_2D_mu_HP_nob.root","template_nonRes")
 
 
-makeTopMJJParam('LNuJJ_MJJ_resW_HP.root','HP')
-makeTopMJJParam('LNuJJ_MJJ_resW_LP.root','LP')
+#makeTopMJJParam('LNuJJ_MJJ_resW_HP.root','HP')
+#makeTopMJJParam('LNuJJ_MJJ_resW_LP.root','LP')
 #makeTopMJJParam('LNuJJ_MJJ_resW_NP.root','NP')
             
-#makeGOF("GOFToys.root",9534.22)
+#makeGOF("gof.root",23447.0)
+makeBias()
 
 
 

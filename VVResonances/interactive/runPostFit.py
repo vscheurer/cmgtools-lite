@@ -11,10 +11,11 @@ ROOT.gSystem.Load("libHiggsAnalysisCombinedLimit")
 
 
 plotter=RooPlotter("combined.root")    
-plotter.fix("MH",4000)
+plotter.fix("MH",1350)
 plotter.fix("r",0.0)
 plotter.prefit()
 plotter.addContribution("XWW",True,"X #rightarrow WW",3,1,ROOT.kOrange+10,0,ROOT.kWhite)
+#plotter.addContribution("XWZ",True,"X #rightarrow WW",3,1,ROOT.kMagenta,0,ROOT.kWhite)
 plotter.addContribution("resW",False," resonant (W,t)",2,1,ROOT.kBlack,1001,ROOT.kSpring-5)
 plotter.addContribution("nonRes",False,"non resonant",2,1,ROOT.kBlack,1001,ROOT.kAzure-9,"_opt")
 
@@ -27,20 +28,50 @@ for c in ['nob']:
         pur=['HP','LP']
     for p in pur:
         for l in ['e','mu']:
-#            plotter.drawBinned("MJ","m_{j} (GeV)",c+"_"+l+"_"+p+"_13TeV",[60,110],0,0,"")                                                                                                            
-#            cmslabel_prelim(plotter.pad1,'2016',11)                                                                                                                                                                
-#            plotter.canvas.SaveAs("postFit_"+c+"_"+l+"_"+p+"_13TeV.root")                                                                                                                                         
-#            plotter.canvas.SaveAs("postFit_"+c+"_"+l+"_"+p+"_13TeV.pdf")                                                                                                                                          
-#            plotter.canvas.SaveAs("postFit_"+c+"_"+l+"_"+p+"_13TeV.eps")                                                                                                                                          
-#            if c=='vbf':
-#                plotter.drawBinned("MLNuJ","m_{VV} (GeV)",c+"_"+l+"_"+p+"_13TeV",[],0,0,"MJ:low:30:65")
-#            else:
-#                plotter.drawBinned("MLNuJ","m_{VV} (GeV)",c+"_"+l+"_"+p+"_13TeV",[],0,1,"MJ:low:30:60")
+            continue
 
+#            plotter.drawBinned("MLNuJ","m_{VV} (GeV)",c+"_"+l+"_"+p+"_13TeV",[],0,1,"")
 #            cmslabel_prelim(plotter.pad1,'2016',11)
-#            plotter.canvas.SaveAs("postFitMVVLo_"+c+"_"+l+"_"+p+"_13TeV.root")
-#            plotter.canvas.SaveAs("postFitMVVLo_"+c+"_"+l+"_"+p+"_13TeV.pdf")
-#            plotter.canvas.SaveAs("postFitMVVLo_"+c+"_"+l+"_"+p+"_13TeV.eps")
+#            plotter.canvas.SaveAs("postFitMVV_"+c+"_"+l+"_"+p+"_13TeV.root")
+#            plotter.canvas.SaveAs("postFitMVV_"+c+"_"+l+"_"+p+"_13TeV.pdf")
+#            plotter.canvas.SaveAs("postFitMVV_"+c+"_"+l+"_"+p+"_13TeV.eps")
+
+            plotter.drawBinned("MJ","m_{j} (GeV)",c+"_"+l+"_"+p+"_13TeV",[],0,0,"")
+            cmslabel_prelim(plotter.pad1,'2016',11)
+            plotter.canvas.SaveAs("postFitMJJ_"+c+"_"+l+"_"+p+"_13TeV.root")
+            plotter.canvas.SaveAs("postFitMJJ_"+c+"_"+l+"_"+p+"_13TeV.pdf")
+            plotter.canvas.SaveAs("postFitMJJ_"+c+"_"+l+"_"+p+"_13TeV.eps")
+
+#            plotter.drawBinned("MLNuJ","m_{VV} (GeV)",c+"_"+l+"_"+p+"_13TeV",[],0,0,"MJ:sig:66:86")
+#            cmslabel_prelim(plotter.pad1,'2016',11)
+#            plotter.canvas.SaveAs("postFitMVVW_"+c+"_"+l+"_"+p+"_13TeV.root")
+#            plotter.canvas.SaveAs("postFitMVVW_"+c+"_"+l+"_"+p+"_13TeV.pdf")
+#            plotter.canvas.SaveAs("postFitMVVW_"+c+"_"+l+"_"+p+"_13TeV.eps")
+
+            if c=='vbf':
+                plotter.drawBinned("MLNuJ","m_{VV} (GeV)",c+"_"+l+"_"+p+"_13TeV",[0,10000],0,0,"")
+            else:
+                plotter.drawBinned("MLNuJ","m_{VV} (GeV)",c+"_"+l+"_"+p+"_13TeV",[0,10000],0,1,"")
+
+            cmslabel_prelim(plotter.pad1,'2016',11)
+            plotter.canvas.SaveAs("postFitMVV_"+c+"_"+l+"_"+p+"_13TeV.root")
+            plotter.canvas.SaveAs("postFitMVV_"+c+"_"+l+"_"+p+"_13TeV.pdf")
+            plotter.canvas.SaveAs("postFitMVV_"+c+"_"+l+"_"+p+"_13TeV.eps")
+
+            plotter.drawBinned("MJ","m_{j} (GeV)",c+"_"+l+"_"+p+"_13TeV",[64,106],0,0,"")                                                                                                            
+            cmslabel_prelim(plotter.pad1,'2016',11)                                                                                                                                                                
+            plotter.canvas.SaveAs("postFit_"+c+"_"+l+"_"+p+"_13TeV.root")                                                                                                                                         
+            plotter.canvas.SaveAs("postFit_"+c+"_"+l+"_"+p+"_13TeV.pdf")                                                                                                                                          
+            plotter.canvas.SaveAs("postFit_"+c+"_"+l+"_"+p+"_13TeV.eps")                                                                                                                                          
+            if c=='vbf':
+                plotter.drawBinned("MLNuJ","m_{VV} (GeV)",c+"_"+l+"_"+p+"_13TeV",[],0,0,"MJ:low:30:64")
+            else:
+                plotter.drawBinned("MLNuJ","m_{VV} (GeV)",c+"_"+l+"_"+p+"_13TeV",[],0,1,"MJ:low:30:64")
+
+            cmslabel_prelim(plotter.pad1,'2016',11)
+            plotter.canvas.SaveAs("postFitMVVLo_"+c+"_"+l+"_"+p+"_13TeV.root")
+            plotter.canvas.SaveAs("postFitMVVLo_"+c+"_"+l+"_"+p+"_13TeV.pdf")
+            plotter.canvas.SaveAs("postFitMVVLo_"+c+"_"+l+"_"+p+"_13TeV.eps")
 
             if c=='vbf':
                 plotter.drawBinned("MLNuJ","m_{VV} (GeV)",c+"_"+l+"_"+p+"_13TeV",[],0,0,"MJ:high:106:210")

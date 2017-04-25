@@ -46,7 +46,7 @@ def returnString(func,options):
 def runFits(data,options):
 
 #    axis=ROOT.TAxis(10,array('d',[600,800,900,1000,1250,1500,2000,2500,3000,3500,4000]))
-    axis=ROOT.TAxis(14,array('d',[550,600,650,700,750,800,900,1000,1250,1500,2000,2500,3000,3500,4000]))
+    axis=ROOT.TAxis(9,array('d',[800,900,1000,1250,1500,2000,2500,3000,3500,4000]))
 
     graphs={'meanW':ROOT.TGraphErrors(),'sigmaW':ROOT.TGraphErrors(),'alphaW':ROOT.TGraphErrors(),'alphaW2':ROOT.TGraphErrors(),'n':ROOT.TGraphErrors(),'meanTop':ROOT.TGraphErrors(),'sigmaTop':ROOT.TGraphErrors(),'alphaTop':ROOT.TGraphErrors(),'alphaTop2':ROOT.TGraphErrors(),'f':ROOT.TGraphErrors(),'f2':ROOT.TGraphErrors(),'slope':ROOT.TGraphErrors()}
 
