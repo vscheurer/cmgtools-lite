@@ -157,11 +157,19 @@ WPlotters = getPlotters('TT_pow,T_tWch,TBar_tWch,WWTo1L1Nu2Q,WZTo1L1Nu2Q',False,
 W = MergedPlotter(WPlotters)
 
 
+TOPPlotters = getPlotters('TT_pow,T_tWch,TBar_tWch',False)
+top = MergedPlotter(TOPPlotters)
+
+
+
 QCDPlotters = getPlotters('QCD_HT',False)
 QCD = MergedPlotter(QCDPlotters)
 
 DATAPlotters = getPlotters('SingleMuon_,SingleElectron_,MET_',True)
 data=MergedPlotter(DATAPlotters)
+
+SigPlotters = getPlotters('BulkGravToWWToWlepWhad_narrow_1400',False)
+sig = MergedPlotter(SigPlotters)
 
 
 #Fill properties

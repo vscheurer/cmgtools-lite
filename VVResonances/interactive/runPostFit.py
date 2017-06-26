@@ -12,7 +12,7 @@ ROOT.gSystem.Load("libHiggsAnalysisCombinedLimit")
 
 plotter=RooPlotter("combined.root")    
 plotter.fix("MH",1350)
-plotter.fix("r",0.0)
+plotter.fix("r",0.021)
 plotter.prefit()
 plotter.addContribution("XWW",True,"X #rightarrow WW",3,1,ROOT.kOrange+10,0,ROOT.kWhite)
 #plotter.addContribution("XWZ",True,"X #rightarrow WW",3,1,ROOT.kMagenta,0,ROOT.kWhite)

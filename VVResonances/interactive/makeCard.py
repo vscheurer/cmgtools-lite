@@ -46,7 +46,7 @@ for category in ['nob']:
 
 
             if purity=='HP':
-                card.addParametricYieldWithUncertainty("XWW",0,"LNuJJ_XWW_"+lepton+"_"+purity+"_"+category+"_yield.json",1.0,'CMS_tau21_PtDependence','log(MH/600)',0.041)
+                card.addParametricYieldWithUncertainty("XWW",0,"LNuJJ_XWW_"+lepton+"_"+purity+"_"+category+"_yield.json",1,'CMS_tau21_PtDependence','log(MH/600)',0.041)
 #                card.addParametricYieldWithUncertainty("XWZ",1,"LNuJJ_XWZ_"+lepton+"_"+purity+"_"+category+"_yield.json",1.0,'CMS_tau21_PtDependence','log(MH/600)',0.041)
 
 #                card.addParametricYieldWithUncertainty("XWH",0,"LNuJJ_XWH_"+lepton+"_"+purity+"_"+category+"_yield.json",1.0,'CMS_tau21_PtDependence','(log(MH/600))',0.041)
@@ -58,7 +58,7 @@ for category in ['nob']:
 #                card.addParametricYieldHVTBR("XWW",0,"LNuJJ_XWW_"+lepton+"_"+purity+"_"+category+"_yield.json","HVT.json","BRWW",1.0,"CMS_tau21_PtDependence",'((0.054/0.041)*(-log(MH/600))',0.041)
 #                card.addParametricYieldHVTBR("XWZ",1,"LNuJJ_XWZ_"+lepton+"_"+purity+"_"+category+"_yield.json","HVT.json","BRWZ",1.0,"CMS_tau21_PtDependence",'((0.054/0.041)*(-log(MH/600))',0.041)
 
-                card.addParametricYieldWithUncertainty("XWW",0,"LNuJJ_XWW_"+lepton+"_"+purity+"_"+category+"_yield.json",1.0,'CMS_tau21_PtDependence','((0.054/0.041)*(-log(MH/600)))',0.041)
+                card.addParametricYieldWithUncertainty("XWW",0,"LNuJJ_XWW_"+lepton+"_"+purity+"_"+category+"_yield.json",1,'CMS_tau21_PtDependence','((0.054/0.041)*(-log(MH/600)))',0.041)
 #                card.addParametricYieldWithUncertainty("XWZ",1,"LNuJJ_XWZ_"+lepton+"_"+purity+"_"+category+"_yield.json",1.0,'CMS_tau21_PtDependence','((0.054/0.041)*(-log(MH/600)))',0.041)
 
 #                card.addParametricYieldWithUncertainty("XWH",0,"LNuJJ_XWH_"+lepton+"_"+purity+"_"+category+"_yield.json",1.0,'CMS_tau21_PtDependence','(-log(MH/600))',0.054)
