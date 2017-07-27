@@ -10,12 +10,14 @@ ROOT.gSystem.Load("libHiggsAnalysisCombinedLimit")
 
 
 
-plotter=RooPlotter("combined.root")    
+plotter=RooPlotter("combinedWZ.root")    
 plotter.fix("MH",1350)
-plotter.fix("r",0.021)
+#plotter.fix("r",0.0)
 plotter.prefit()
-plotter.addContribution("XWW",True,"X #rightarrow WW",3,1,ROOT.kOrange+10,0,ROOT.kWhite)
-#plotter.addContribution("XWZ",True,"X #rightarrow WW",3,1,ROOT.kMagenta,0,ROOT.kWhite)
+#plotter.fix("r",0.021)
+
+#plotter.addContribution("XWW",True,"X #rightarrow WW",3,1,ROOT.kOrange+10,0,ROOT.kWhite)
+plotter.addContribution("XWZ",True,"X #rightarrow WZ",3,1,ROOT.kOrange+10,0,ROOT.kWhite)
 plotter.addContribution("resW",False," resonant (W,t)",2,1,ROOT.kBlack,1001,ROOT.kSpring-5)
 plotter.addContribution("nonRes",False,"non resonant",2,1,ROOT.kBlack,1001,ROOT.kAzure-9,"_opt")
 

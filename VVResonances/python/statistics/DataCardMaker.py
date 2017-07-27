@@ -566,6 +566,65 @@ class DataCardMaker:
         qcd = ROOT.RooPower(pdfName,pdfName,self.w.var(MVV),self.w.var(p0))
         getattr(self.w,'import')(qcd,ROOT.RooFit.Rename(pdfName))
 
+    def addMVVBackgroundShapeEXPN(self,name,variable,newTag="",preconstrains={}):
+        
+        MVV=variable
+        self.w.factory(MVV+"[0,13000]")
+
+        if newTag !="":
+            tag=newTag
+        else:
+            tag=name+"_"+self.tag
+
+        p0="_".join(["p0",tag])
+        if "p0" in preconstrains.keys():
+            val = preconstrains['p0']['val']
+            err = preconstrains['p0']['err']
+            self.addSystematic(p0,"param",[val,err])
+        else:
+            val = -0.001
+        self.w.factory("{name}[{val},-5,0]".format(name=p0,val=val))
+
+        p1="_".join(["p1",tag])
+        if "p0" in preconstrains.keys():
+            val = preconstrains['p1']['val']
+            err = preconstrains['p1']['err']
+            self.addSystematic(p1,"param",[val,err])
+        else:
+            val = 0
+        self.w.factory("{name}[{val},-10,10]".format(name=p1,val=val))
+
+
+        pdfName="_".join([name,self.tag])
+        qcd = ROOT.RooExpNPdf(pdfName,pdfName,self.w.var(MVV),self.w.var(p0),self.w.var(p1))
+        getattr(self.w,'import')(qcd,ROOT.RooFit.Rename(pdfName))
+
+
+    def addMVVBackgroundShapeEXPNFromMC(self,name,variable,newTag,filename):
+        f=ROOT.TFile(filename)
+        hist=f.Get(name)
+        func = ROOT.TF1("func","[0]*exp([1]*x+[2]/x)",500,10000)
+        hist.Fit(func)
+        MVV=variable
+        self.w.factory(MVV+"[0,13000]")
+
+        if newTag !="":
+            tag=newTag
+        else:
+            tag=name+"_"+self.tag
+
+        p0="_".join(["p0",tag])
+        val = -0.001
+        self.w.factory("{name}[{val}]".format(name=p0,val=func.GetParameter(1)))
+
+        p1="_".join(["p1",tag])
+        val = 0
+        self.w.factory("{name}[{val}]".format(name=p1,val=func.GetParameter(2)))
+
+
+        pdfName="_".join([name,self.tag])
+        qcd = ROOT.RooExpNPdf(pdfName,pdfName,self.w.var(MVV),self.w.var(p0),self.w.var(p1))
+        getattr(self.w,'import')(qcd,ROOT.RooFit.Rename(pdfName))
 
 
     def addMVVBackgroundShapeErfPow(self,name,variable,newTag="",preconstrains={}):

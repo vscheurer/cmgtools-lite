@@ -1,5 +1,33 @@
 import ROOT
 import copy
+def convertToPoisson(h):
+    graph = ROOT.TGraphAsymmErrors()
+    q = (1-0.6827)/2.
+
+    for i in range(1,h.GetNbinsX()+1):
+        x=h.GetXaxis().GetBinCenter(i)
+        xLow =h.GetXaxis().GetBinLowEdge(i) 
+        xHigh =h.GetXaxis().GetBinUpEdge(i) 
+        y=h.GetBinContent(i)
+        yLow=0
+        yHigh=0
+        if y !=0.0:
+            yLow = y-ROOT.Math.chisquared_quantile_c(1-q,2*y)/2.
+            yHigh = ROOT.Math.chisquared_quantile_c(q,2*(y+1))/2.-y
+            graph.SetPoint(i-1,x,y)
+            graph.SetPointEYlow(i-1,yLow)
+            graph.SetPointEYhigh(i-1,yHigh)
+            graph.SetPointEXlow(i-1,0.0)
+            graph.SetPointEXhigh(i-1,0.0)
+
+
+    graph.SetMarkerStyle(20)
+    graph.SetLineWidth(2)
+    graph.SetMarkerSize(1.)
+    graph.SetMarkerColor(ROOT.kBlack)
+    
+
+    return graph    
 
 class RooPlotter(object):
     def __init__(self,filename):
@@ -172,7 +200,7 @@ class RooPlotter(object):
         
         
 
-    def moneyPlot(self,var1,var2,varDesc,categories,log=False,rebin=0):
+    def moneyPlot(self,var1,var2,varDesc,categories,log=False,rebin=0,drawSignal=True):
         histo={}
         histoW={}
         histoSB={}
@@ -284,7 +312,10 @@ class RooPlotter(object):
             histoWeighted[comp['name']].SetLineStyle(comp['linestyle'])
             histoWeighted[comp['name']].SetFillColor(comp['fillcolor'])
             histoWeighted[comp['name']].SetFillStyle(comp['fillstyle'])
-            self.stack.Add(histoWeighted[comp['name']])
+            if comp['signal'] and not drawSignal:
+                continue
+            else:
+                self.stack.Add(histoWeighted[comp['name']])
 
 
     
@@ -393,9 +424,247 @@ class RooPlotter(object):
         self.pad2.Update()
 
 
-        
 
-                           
+
+    def moneyPlotSimple(self,var1,var2,varDesc,categories,log=False,rebin=0,drawSignal=True):
+        histo={}
+        histoW={}
+        histoSB={}
+        histoWeighted={}
+        varMax=self.w.var(var1).getMax()
+        varMin=self.w.var(var1).getMin()
+        varBins=self.w.var(var1).getBins()
+
+        for c in categories:
+            histo[c]={}
+            histoW[c]=None
+            histoSB[c]=None
+            histoSBTest=None
+            #first create 2D histograms and fill the S and S+B histograms in each category
+
+            for i in range(0,len(self.contributions)):
+                data = self.contributions[i]
+                histo[c][data['name']] = self.fetch2DHistogram(var1,var2,c,data['name'],data['signal'],data['suffix'])
+                proje = histo[c][data['name']].ProjectionY('proje')
+                if data['signal']:
+                    if histoW[c]==None:
+                        histoW[c] = histo[c][data['name']].ProjectionY('weight_'+c)
+                    else:    
+                        histoW[c].Add(proje)
+
+                    if histoSB[c]==None:
+                        histoSB[c] = histo[c][data['name']].ProjectionY('weightDenom')
+                    else:   
+                        histoSB[c].Add(proje)
+
+                    if histoSBTest==None:
+                        histoSBTest = histo[c][data['name']].ProjectionY('weightDenomT')
+                    else:   
+                        histoSBTest.Add(proje)
+
+                else:
+                    if histoSB[c]==None:
+                        histoSB[c] = histo[c][data['name']].ProjectionY('weightDenom')
+                    else:   
+                        histoSB[c].Add(proje)
+                    if histoSBTest==None:
+                        histoSBTest = histo[c][data['name']].ProjectionY('weightDenomT')
+                    else:   
+                        histoSBTest.Add(proje)
+
+
+        for c in categories:
+            histoW[c].Divide(histoSB[c])
+#            histoW[c].Divide(histoSBTest)
+#            histoW[c].Scale(1.0/histoW[c].Integral())
+#        sumW=0    
+#        for c in categories:
+#            sumW+=histoW[c].Integral()
+#        for c in categories:
+#            histoW[c].Scale(1.0/sumW)
+
+
+        #Now reloop and reweigh the histograms creating 1D histograms 
+        finalSignalHisto = None    
+        finalBkgHisto = None    
+
+        self.stack = ROOT.THStack("stack","")
+        for comp in reversed(self.contributions):
+            for cat in categories:
+                histogram =histo[cat][comp['name']]
+                for i in range(1,histogram.GetNbinsX()+1):
+                    for j in range(1,histogram.GetNbinsY()+1):
+                        d = histogram.GetBinContent(i,j)
+                        weight = histoW[cat].GetBinContent(j)
+                        histogram.SetBinContent(i,j,d*weight)
+                proje = histogram.ProjectionX()
+                if rebin:
+                    proje.Rebin(rebin)
+                if not (comp['name'] in histoWeighted.keys()):
+                    histoWeighted[comp['name']] =histogram.ProjectionX(comp['name'])
+                    if rebin:
+                        histoWeighted[comp['name']].Rebin(rebin)
+                    histoWeighted[comp['name']].GetXaxis().SetTitle(varDesc)
+                else:
+                    histoWeighted[comp['name']].Add(proje)
+
+                if comp['signal']:
+                    if finalSignalHisto==None:
+                        finalSignalHisto=histogram.ProjectionX("finalSignalHisto") 
+                        if rebin:
+                            finalSignalHisto.Rebin(rebin)
+                        finalSignalHisto.SetLineColor(comp['linecolor'])
+                        finalSignalHisto.SetLineWidth(comp['linewidth'])
+                        finalSignalHisto.SetLineStyle(comp['linestyle'])
+                        finalSignalHisto.SetFillColor(comp['fillcolor'])
+                        finalSignalHisto.SetFillStyle(comp['fillstyle'])
+                    else:
+                        finalSignalHisto.Add(proje)
+
+                else:        
+                    if finalBkgHisto==None:
+                        finalBkgHisto=histogram.ProjectionX("finalBkgHisto") 
+                        if rebin:
+                            histogram.ProjectionX("finalBkgHisto").Rebin(rebin) 
+
+                    else:
+                        finalBkgHisto.Add(proje)
+
+    
+#            histoWeighted[comp['name']].Scale(1.0/sumW)
+            #apply colors
+            histoWeighted[comp['name']].SetLineColor(comp['linecolor'])
+            histoWeighted[comp['name']].SetLineWidth(comp['linewidth'])
+            histoWeighted[comp['name']].SetLineStyle(comp['linestyle'])
+            histoWeighted[comp['name']].SetFillColor(comp['fillcolor'])
+            histoWeighted[comp['name']].SetFillStyle(comp['fillstyle'])
+            if comp['signal'] and not drawSignal:
+                continue
+            else:
+                self.stack.Add(histoWeighted[comp['name']])
+
+
+    
+        #Now reweigh the data
+        dataH = ROOT.TH1D("data","data",self.w.var(var1).getBins(),self.w.var(var1).getMin(),self.w.var(var1).getMax())
+        dataH.SetLineColor(ROOT.kBlack)
+        dataH.Sumw2()
+        for i in range(0,self.w.data("data_obs").numEntries()):
+            line=self.w.data("data_obs").get(i)
+            weight = self.w.data("data_obs").weight()
+            x = line.find(var1).getVal()
+            y = line.find(var2).getVal()
+            cat = line.find("CMS_channel").getLabel()
+            if not (cat in categories):
+                continue
+            weight=weight*histoW[cat].GetBinContent(histoW[cat].GetXaxis().FindBin(y))
+            dataH.Fill(x,weight)
+
+        if rebin:
+            dataH.Rebin(rebin)
+        #Draw!
+        self.canvas=ROOT.TCanvas("c","",700,750)
+        self.canvas.cd()
+        self.pad1 = ROOT.TPad("pad1","",0.0,0.2,1.0,1.0,0)
+        self.pad2 = ROOT.TPad("pad2","",0.0,0.0,1.0,0.2,0)
+        self.pad1.Draw()
+        self.pad2.Draw()
+        self.pad1.cd()
+        self.frame=self.w.var(var1).frame()
+        self.frame.SetXTitle(varDesc)
+        self.frame.SetYTitle("S/(S+B) weighted events")
+        dataH.SetMarkerStyle(20)
+        dataH.SetLineWidth(2)
+
+        self.frame.Draw("AH")
+        self.bkgHisto = finalBkgHisto.Clone()
+        self.bkgHisto.SetName("BKGHISTOTOTAL")
+        self.bkgHisto.Draw("A,HIST,SAME")
+        self.data=dataH
+        self.data.Draw("Psame")
+        self.pad1.SetBottomMargin(0.012)
+        self.pad1.SetLeftMargin(0.13)
+
+        if log:
+            self.frame.GetYaxis().SetRangeUser(0.00001,1e+6)
+            self.pad1.SetLogy(1)
+        else:
+            self.frame.GetYaxis().SetRangeUser(0.0,self.data.GetMaximum()*1.3)
+        self.pad1.RedrawAxis()
+        self.pad1.Update()
+
+
+
+        self.legend = ROOT.TLegend(0.58,0.6,0.92,0.90,"","brNDC")
+	self.legend.SetBorderSize(0)
+	self.legend.SetLineColor(1)
+	self.legend.SetLineStyle(1)
+	self.legend.SetLineWidth(1)
+	self.legend.SetFillColor(0)
+	self.legend.SetFillStyle(0)
+	self.legend.SetTextFont(42)
+
+        self.bkgHisto.SetLineWidth(2)
+        self.bkgHisto.SetLineColor(ROOT.kRed)
+        self.bkgHisto.SetFillColor(ROOT.kRed)
+
+	self.legend.AddEntry(self.data,"Data","P")
+	self.legend.AddEntry(self.bkgHisto,"Background","F")
+        self.legend.Draw()    
+            
+        self.pad2.cd()
+        #mke the ratio data/MC
+        self.frame2=self.w.var(var1).frame()
+        self.frame2.SetTitle("")    
+        self.frame2.GetYaxis().SetTitle("Data-Bkg.")    
+        self.frame2.SetLabelSize(0.15,"X")    
+        self.frame2.SetLabelSize(0.15,"Y")    
+        self.frame2.SetTitleSize(0.18,"X")    
+        self.frame2.SetTitleSize(0.18,"Y")   
+        self.frame2.SetTitleOffset(0.90,"X")    
+        self.frame2.SetTitleOffset(0.3,"Y")    
+
+        self.frame2.Draw()
+        self.frame2.SetXTitle(varDesc)
+        
+        self.dataMinusB = dataH.Clone()
+        self.dataMinusB.SetName("dataMinusB")
+        self.signalHisto = finalSignalHisto
+        for  i in range(1,self.dataMinusB.GetNbinsX()+1):
+            d = self.dataMinusB.GetBinContent(i)
+            de = self.dataMinusB.GetBinError(i)
+            b = finalBkgHisto.GetBinContent(i)
+            self.dataMinusB.SetBinContent(i,d-b)
+
+
+        self.dataMinusB.Draw("SAME")
+        self.frame2.GetYaxis().SetRangeUser(-15,15)
+
+        self.line=ROOT.TLine(varMin,0.0,varMax,0.0)
+        self.line.SetLineWidth(2)
+        self.line.Draw()
+
+        ROOT.gStyle.SetOptTitle(0)
+        ROOT.gStyle.SetOptStat(0)
+        self.pad2.SetTopMargin(0.04)
+        self.pad2.SetBottomMargin(0.5)
+        self.pad2.SetLeftMargin(0.13)
+        self.pad2.RedrawAxis()
+        self.pad2.Update()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
     def drawBinned(self,var,varDesc,cat,blinded=[],doUncBand = False,log=False,rangeStr=""):
         self.canvas=ROOT.TCanvas("c","",700,750)

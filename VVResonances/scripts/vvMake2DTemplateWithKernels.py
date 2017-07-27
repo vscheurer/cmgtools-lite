@@ -342,6 +342,7 @@ for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
             histogram_top_up.Add(histTMP,2.0)
             histogram_top_down.Add(histTMP,0.5)
         else:
+
             histogram_top_up.Add(histTMP)
             histogram_top_down.Add(histTMP)
 
