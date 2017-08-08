@@ -3,7 +3,7 @@
 Prepare you working directory:
 
 ```
-mkdir  VVAnalysisWith2DFit
+mkdir VVAnalysisWith2DFit
 mkdir CMGToolsForProduction
 cd CMGToolsForProduction/
 cmsrel CMSSW_8_0_25
