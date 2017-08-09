@@ -1,58 +1,34 @@
-# Short recipe for TTHAnalysis setup
+# VV statistical analysis in 74X
 
-For the general recipe to set up CMG Framework in CMSSW_8_0_X, [follow these instructions](https://twiki.cern.ch/twiki/bin/view/CMS/CMGToolsReleasesExperimental#CMGTools_lite_release_for_ICHEP).
-
---------------
-
-### Basic setup (from the above link) is this:
-
-#### Set up CMSSW and the base git
+Prepare your working dir with Higgs combine tools (74X)
 
 ```
-cmsrel CMSSW_8_0_11
-cd CMSSW_8_0_11/src
+mkdir VVAnalysisWith2DFit
+mkdir CMGToolsForStat74X
+cd CMGToolsForStat74X
+cmsrel CMSSW_7_4_7
+cd CMSSW_7_4_7/src
 cmsenv
-git cms-init
+git clone https://github.com/cms-analysis/HiggsAnalysis-CombinedLimit.git HiggsAnalysis/CombinedLimit
+cd HiggsAnalysis/CombinedLimit
+cd $CMSSW_BASE/src/HiggsAnalysis/CombinedLimit
+git fetch origin
+git checkout v6.3.1
+scram b clean; scram b -j 8
 ```
 
-#### Add the central cmg-cmssw repository to get the Heppy 80X branch
+Checkout the VV statistical tools
 
 ```
-git remote add cmg-central https://github.com/CERN-PH-CMG/cmg-cmssw.git -f  -t heppy_80X
-```
-
-#### Configure the sparse checkout, and get the base heppy packages
-
-```
-cp /afs/cern.ch/user/c/cmgtools/public/sparse-checkout_80X_heppy .git/info/sparse-checkout
-git checkout -b heppy_80X cmg-central/heppy_80X
-```
-
-#### Add your mirror, and push the 80X branch to it
-
-```
-git remote add origin git@github.com:YOUR_GITHUB_REPOSITORY/cmg-cmssw.git
-git push -u origin heppy_80X
-```
-
-#### Now get the CMGTools subsystem from the cmgtools-lite repository
-
-```
-git clone -o cmg-central https://github.com/CERN-PH-CMG/cmgtools-lite.git -b 80X CMGTools
-cd CMGTools
-```
-
-#### Add your fork, and push the 80X branch to it
-
-```
-git remote add origin  git@github.com:YOUR_GITHUB_REPOSITORY/cmgtools-lite.git
-git push -u origin 80X
-```
-
-#### Compile
-
-```
-cd $CMSSW_BASE/src
+cd ../..
+git clone https://github.com/jngadiub/cmgtools-lite.git -b qstarStat CMGTools
 scram b -j 8
 ```
 
+Run the main code to produce the inputs to the combine
+ 
+```
+cd VVResonances/interactive
+ln -s samples_location samples
+python makeInputs_qStar.py
+```

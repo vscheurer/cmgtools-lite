@@ -26,6 +26,8 @@ parser.add_option("-f","--scaleFactors",dest="scaleFactors",help="Additional sca
 (options,args) = parser.parse_args()
 #define output dictionary
 
+ROOT.gROOT.SetBatch(True)
+
 samples={}
 graphs={'MEAN':ROOT.TGraphErrors(),'SIGMA':ROOT.TGraphErrors(),'ALPHA1':ROOT.TGraphErrors(),'N1':ROOT.TGraphErrors(),'ALPHA2':ROOT.TGraphErrors(),'N2':ROOT.TGraphErrors()}
 

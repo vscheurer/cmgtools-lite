@@ -29,6 +29,8 @@ parser.add_option("-f","--fix",dest="fixPars",help="Fixed parameters",default=""
 (options,args) = parser.parse_args()
 #define output dictionary
 
+ROOT.gROOT.SetBatch(True)
+
 samples={}
 graphs={'mean':ROOT.TGraphErrors(),'sigma':ROOT.TGraphErrors(),'alpha':ROOT.TGraphErrors(),'n':ROOT.TGraphErrors(),'f':ROOT.TGraphErrors(),'slope':ROOT.TGraphErrors(),'alpha2':ROOT.TGraphErrors(),'n2':ROOT.TGraphErrors()}
 
