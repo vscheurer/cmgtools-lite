@@ -373,7 +373,7 @@ ttAna = cfg.Analyzer(
 
 
 
-
+'''
 metWeightAna = cfg.Analyzer(
     ObjectWeightAnalyzer, name="metWeightAnalyzer",
     path='${CMSSW_BASE}/src/CMGTools/VVResonances/data',
@@ -386,7 +386,7 @@ metWeightAna = cfg.Analyzer(
         {'cut':lambda x: abs(x.leg1.leg1.pdgId())==13,'dimensions':1,'filename':'myTriggerScaleFactors.root','histoname':"MET_MU_DATA",'x':lambda x:x.leg1.leg2.pt(),'tag':'eff_HLTMET_DATA'},
         ]
 )
-
+'''
 
 
 vTauAna = cfg.Analyzer(

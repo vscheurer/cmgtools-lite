@@ -2,21 +2,6 @@ from PhysicsTools.Heppy.analyzers.core.AutoFillTreeProducer  import *
 import ROOT
 dummyLV=ROOT.math.XYZTLorentzVector(0.0,0.0,0.0001,0.0001)
 
-
-LNuType = NTupleObjectType("LNuType", baseObjectTypes=[fourVectorType], variables = [
-    NTupleVariable("mt",   lambda x : x.mt(), float),
-    NTupleVariable("deltaPhi",   lambda x : x.deltaPhi(), float),
-])
-
-
-
-LLType = NTupleObjectType("LLType", baseObjectTypes=[fourVectorType], variables = [
-    NTupleVariable("mt",   lambda x : x.mt(), float),
-    NTupleVariable("deltaPhi",   lambda x : x.deltaPhi(), float),
-    NTupleVariable("deltaR",   lambda x : x.deltaR(), float),
-])
-
-
 FatJetType = NTupleObjectType("FatJetType", baseObjectTypes=[jetType], variables = [
     NTupleVariable("tau1",   lambda x : x.substructure.ntau[0], float),
     NTupleVariable("tau2",   lambda x : x.substructure.ntau[1], float),
@@ -44,9 +29,6 @@ FatJetType = NTupleObjectType("FatJetType", baseObjectTypes=[jetType], variables
     NTupleVariable("gen_tau2",   lambda x : x.substructureGEN.ntau[1] if hasattr(x,'substructureGEN') else -99, float,"",-99,True),
     NTupleVariable("gen_tau3",   lambda x : x.substructureGEN.ntau[2] if hasattr(x,'substructureGEN') else -99, float,"",-99,True),
     NTupleVariable("gen_tau4",   lambda x : x.substructureGEN.ntau[3] if hasattr(x,'substructureGEN') else -99, float,"",-99,True),
-
-
-
 ])
 
 
@@ -95,32 +77,6 @@ VJType = NTupleObjectType("VJType", baseObjectTypes=[VVType], variables = [
     NTupleSubObject("l2_gen_pruned",  lambda x : x.leg2.substructureGEN.prunedJet if hasattr(x.leg2,'substructureGEN') else dummyLV,fourVectorType,True),
 ])
 
-
-
-LNuJJType = NTupleObjectType("LNuJJType", baseObjectTypes=[VJType], variables = [
-    NTupleSubObject("altLV",  lambda x : x.leg1.alternateLV+x.leg2.p4(),fourVectorType),
-    NTupleSubObject("rawLV",  lambda x : x.leg1.rawP4()+x.leg2.p4(),fourVectorType),
-    NTupleSubObject("l1",  lambda x : x.leg1,LNuType),
-    NTupleSubObject("altl1",  lambda x : x.leg1.alternateLV,fourVectorType),
-    NTupleSubObject("l1_l",  lambda x : x.leg1.leg1,leptonTypeExtra),
-    NTupleVariable("l1_l_chargedHadronIsoRel", lambda x: x.leg1.leg1.chargedHadronIso()/x.leg1.leg1.pt(), float),
-    NTupleSubObject("l1_met",  lambda x : x.leg1.leg2,metType),
-    #Scale factors , For HLT use the OR between the two triggers:
-    NTupleVariable("sf",  lambda x : x.leg1.leg1.sfWV*(x.leg1.leg1.eff_HLT_DATA+x.eff_HLTMET_DATA-x.leg1.leg1.eff_HLT_DATA*x.eff_HLTMET_DATA)/(x.leg1.leg1.eff_HLT_MC+x.eff_HLTMET_MC-x.leg1.leg1.eff_HLT_MC*x.eff_HLTMET_MC),float),
-    NTupleVariable("sfWV",  lambda x : x.leg1.leg1.sfWV, float),
-#    NTupleVariable("sfHLT",  lambda x : x.leg1.leg1.sfHLT, float),
-#    NTupleVariable("sfHLTMET",  lambda x : x.sfHLTMET, float)
-])
-
-
-LLJJType = NTupleObjectType("LLJJType", baseObjectTypes=[VJType], variables = [
-    NTupleSubObject("l1",  lambda x : x.leg1,LLType),
-    NTupleSubObject("l1_l1",  lambda x : x.leg1.leg1,leptonTypeExtra),
-    NTupleSubObject("l1_l2",  lambda x : x.leg1.leg2,leptonTypeExtra),
-])
-
-
-
 JJType = NTupleObjectType("JJType", baseObjectTypes=[VJType], variables = [
 
 
@@ -142,53 +98,5 @@ JJType = NTupleObjectType("JJType", baseObjectTypes=[VJType], variables = [
     NTupleSubObject("l1_gen",  lambda x : x.leg1.substructureGEN.jet if hasattr(x.leg1,'substructureGEN') else dummyLV,fourVectorType,True),
     NTupleSubObject("l1_gen_softDrop",  lambda x : x.leg1.substructureGEN.softDropJet if hasattr(x.leg1,'substructureGEN') else dummyLV,fourVectorType,True),
     NTupleSubObject("l1_gen_pruned",  lambda x : x.leg1.substructureGEN.prunedJet if hasattr(x.leg1,'substructureGEN') else dummyLV,fourVectorType,True),
-
-])
-
-
-
-NuNuJJType = NTupleObjectType("NuNuJJType", baseObjectTypes=[VJType], variables = [
-    NTupleSubObject("l1",  lambda x : x.leg1,metType)
-])
-
-
-TruthType = NTupleObjectType("TruthType", baseObjectTypes=[], variables = [
-    NTupleSubObject("genBoson", lambda x: x.genBoson if hasattr(x, 'genBoson') else dummyLV, fourVectorType, True),
-    NTupleVariable("genTop_weight", lambda x: x.genTop_weight if hasattr(x, 'genTop_weight') else 1., float, "" , 1., True),
-    NTupleVariable("genTop_1_pt", lambda x: x.genTop_1_pt if hasattr(x, 'genTop_1_pt') else -99, float, "" , -99, True),
-    NTupleVariable("genTop_2_pt", lambda x: x.genTop_2_pt if hasattr(x, 'genTop_2_pt') else -99, float, "" , -99, True),
-])
-
-
-#Types for TTbar
-WbJJType = NTupleObjectType("WbJJType", baseObjectTypes=[VJType], variables = [
-    NTupleSubObject("l1",  lambda x : x.leg1,fourVectorType),
-    NTupleSubObject("l1_Wjet",  lambda x : x.leg1.leg1,FatJetType),
-    NTupleSubObject("l1_Wjet_softDrop",  lambda x : x.leg1.leg1.substructure.softDropJet,fourVectorType),
-    NTupleSubObject("l1_Wjet_softDrop_s1",  lambda x : x.leg1.leg1.substructure.softDropSubjets[0] if len(x.leg1.leg1.substructure.softDropSubjets)>0 else dummyLV,fourVectorType),
-    NTupleSubObject("l1_Wjet_softDrop_s2",  lambda x : x.leg1.leg1.substructure.softDropSubjets[1] if len(x.leg1.leg1.substructure.softDropSubjets)>1 else dummyLV,fourVectorType),
-    NTupleSubObject("l1_Wjet_gen",  lambda x : x.leg1.leg1.substructureGEN.jet if hasattr(x.leg1.leg1,'substructureGEN') else dummyLV,fourVectorType,True),
-    NTupleSubObject("l1_Wjet_gen_softDrop",  lambda x : x.leg1.leg1.substructureGEN.softDropJet if hasattr(x.leg1.leg1,'substructureGEN') else dummyLV,fourVectorType,True),
-    NTupleSubObject("l1_bjet",  lambda x : x.leg1.leg2,jetType),
-])
-
-WbWbType = NTupleObjectType("WbWbType", baseObjectTypes=[VVType], variables = [
-    NTupleSubObject("l1",  lambda x : x.leg1,fourVectorType),
-    NTupleSubObject("l1_Wjet",  lambda x : x.leg1.leg1,FatJetType),
-    NTupleSubObject("l1_Wjet_softDrop",  lambda x : x.leg1.leg1.substructure.softDropJet,fourVectorType),
-    NTupleSubObject("l1_Wjet_softDrop_s1",  lambda x : x.leg1.leg1.substructure.softDropSubjets[0] if len(x.leg1.leg1.substructure.softDropSubjets)>0 else dummyLV,fourVectorType),
-    NTupleSubObject("l1_Wjet_softDrop_s2",  lambda x : x.leg1.leg1.substructure.softDropSubjets[1] if len(x.leg1.leg1.substructure.softDropSubjets)>1 else dummyLV,fourVectorType),
-    NTupleSubObject("l1_Wjet_gen",  lambda x : x.leg1.leg1.substructureGEN.jet if hasattr(x.leg1.leg1,'substructureGEN') else dummyLV,fourVectorType,True),
-    NTupleSubObject("l1_Wjet_gen_softDrop",  lambda x : x.leg1.leg1.substructureGEN.softDropJet if hasattr(x.leg1.leg1,'substructureGEN') else dummyLV,fourVectorType,True),
-    NTupleSubObject("l1_bjet",  lambda x : x.leg1.leg2,jetType),
-
-    NTupleSubObject("l2",  lambda x : x.leg2,fourVectorType),
-    NTupleSubObject("l2_Wjet",  lambda x : x.leg2.leg1,FatJetType),
-    NTupleSubObject("l2_Wjet_softDrop",  lambda x : x.leg2.leg1.substructure.softDropJet,fourVectorType),
-    NTupleSubObject("l2_Wjet_softDrop_s1",  lambda x : x.leg2.leg1.substructure.softDropSubjets[0] if len(x.leg2.leg1.substructure.softDropSubjets)>0 else dummyLV,fourVectorType),
-    NTupleSubObject("l2_Wjet_softDrop_s2",  lambda x : x.leg2.leg1.substructure.softDropSubjets[1] if len(x.leg2.leg1.substructure.softDropSubjets)>1 else dummyLV,fourVectorType),
-    NTupleSubObject("l2_Wjet_gen",  lambda x : x.leg2.leg1.substructureGEN.jet if hasattr(x.leg2.leg1,'substructureGEN') else dummyLV,fourVectorType,True),
-    NTupleSubObject("l2_Wjet_gen_softDrop",  lambda x : x.leg2.leg1.substructureGEN.softDropJet if hasattr(x.leg2.leg1,'substructureGEN') else dummyLV,fourVectorType,True),
-    NTupleSubObject("l2_bjet",  lambda x : x.leg2.leg2,jetType),
 
 ])

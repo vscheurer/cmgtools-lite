@@ -259,7 +259,8 @@ class VVBuilder(Analyzer):
                         break
             if not overlap:
                 output.append(j)
-        return output
+        
+	return output
 
     def makeWV(self, event):
         output = []
@@ -397,18 +398,20 @@ class VVBuilder(Analyzer):
             return output
 
         VV = Pair(fatJets[0], fatJets[1])
-
+	
         # kinematics
         if abs(VV.leg1.eta() - VV.leg2.eta()) > 1.3 or VV.mass() < 1000:
             return output
 
         self.substructure(VV.leg1, event)
         self.substructure(VV.leg2, event)
-
-        # substructure changes jet, so we need to recalculate the resonance
-        # mass
-        VV = Pair(fatJets[0], fatJets[1])
-
+     
+        # substructure changes jet, so we need to recalculate the resonance mass
+	# also resort the jets in softdrop mass
+	if( VV.leg1.substructure.softDropJetMassBare*VV.leg1.substructure.softDropJetMassCor > VV.leg2.substructure.softDropJetMassBare*VV.leg2.substructure.softDropJetMassCor):
+         VV = Pair(fatJets[0], fatJets[1])
+	else: VV = Pair(fatJets[1], fatJets[0]) 
+	
         # substructure truth
         if self.cfg_comp.isMC:
             self.substructureGEN(VV.leg2, event)
@@ -589,14 +592,14 @@ class VVBuilder(Analyzer):
             for p in event.genPacked:
                 if p.status() == 1 and p.pt() > 0.05 and not (abs(p.pdgId()) in [12, 14, 16]):
                     event.genParticleLVs.push_back(p.p4())
-        LNuJJ = self.makeWV(event)
-        LLJJ = self.makeZV(event)
+        #LNuJJ = self.makeWV(event)
+        #LLJJ = self.makeZV(event)
         JJ = self.makeJJ(event)
-        JJNuNu = self.makeMETV(event)
-        TruthType = self.makeTruthType(event)
+        #JJNuNu = self.makeMETV(event)
+        #TruthType = self.makeTruthType(event)
 
-        setattr(event, 'LNuJJ' + self.cfg_ana.suffix, LNuJJ)
+        #setattr(event, 'LNuJJ' + self.cfg_ana.suffix, LNuJJ)
         setattr(event, 'JJ' + self.cfg_ana.suffix, JJ)
-        setattr(event, 'LLJJ' + self.cfg_ana.suffix, LLJJ)
-        setattr(event, 'JJNuNu' + self.cfg_ana.suffix, JJNuNu)
-        setattr(event, 'TruthType' + self.cfg_ana.suffix, TruthType)
+        #setattr(event, 'LLJJ' + self.cfg_ana.suffix, LLJJ)
+        #setattr(event, 'JJNuNu' + self.cfg_ana.suffix, JJNuNu)
+        #setattr(event, 'TruthType' + self.cfg_ana.suffix, TruthType)

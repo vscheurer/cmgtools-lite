@@ -31,6 +31,12 @@ add your mirror, and push the 80X branch to it
 git remote add origin git@github.com:${GITUSER}/cmg-cmssw.git
 git push -u origin heppy_80X
 ```
+
+add my changes to work with batch and eos (fixed some bugs)
+
+```
+curl https://raw.githubusercontent.com/jngadiub/cmg-cmssw/heppy_80X/PhysicsTools/HeppyCore/python/utils/eostools.py -o hysicsTools/HeppyCore/python/utils/eostools.py
+```
   
 now get the CMGTools subsystem from the cmgtools-lite repository  
 
