@@ -405,12 +405,15 @@ class VVBuilder(Analyzer):
 
         self.substructure(VV.leg1, event)
         self.substructure(VV.leg2, event)
-     
+
         # substructure changes jet, so we need to recalculate the resonance mass
 	# also resort the jets in softdrop mass
-	if( VV.leg1.substructure.softDropJetMassBare*VV.leg1.substructure.softDropJetMassCor > VV.leg2.substructure.softDropJetMassBare*VV.leg2.substructure.softDropJetMassCor):
-         VV = Pair(fatJets[0], fatJets[1])
-	else: VV = Pair(fatJets[1], fatJets[0]) 
+	if hasattr(VV.leg2, 'substructure') and hasattr(VV.leg1,'substructure'):	
+	 if( VV.leg1.substructure.softDropJetMassBare*VV.leg1.substructure.softDropJetMassCor > VV.leg2.substructure.softDropJetMassBare*VV.leg2.substructure.softDropJetMassCor):
+          VV = Pair(fatJets[0], fatJets[1])
+	 else: VV = Pair(fatJets[1], fatJets[0]) 	
+	else:    
+	 VV = Pair(fatJets[0], fatJets[1])
 	
         # substructure truth
         if self.cfg_comp.isMC:
@@ -419,15 +422,14 @@ class VVBuilder(Analyzer):
             if hasattr(VV.leg2, 'substructureGEN') and hasattr(VV.leg1,'substructureGEN'):
                 VV.genPartialMass = (VV.leg1.substructureGEN.jet + VV.leg2.substructureGEN.jet).M()
 
-
-
-
         if not hasattr(VV.leg1, "substructure"):
             return output
 
         if not hasattr(VV.leg2, "substructure"):
             return output
 
+
+	
         # check if there are subjets
 
         # if len(VV.leg2.substructure.prunedSubjets)<2 or len(VV.leg1.substructure.prunedSubjets)<2:

@@ -78,6 +78,13 @@ and you can try a simple test on the lxbatch (NB: do not forget to run voms):
 heppy_batch.py -r /store/cmst3/user/${LXBATCHUSER}/test -o /eos/cms/store/cmst3/user/${LXBATCHUSER}/test/ cfg/runVV_cfg_simple.py -b 'bsub -q 8nh -u ${LXBATCHUSER} -o std_output.txt -J test  < batchScript.sh'
 ```
 
-for full production switch to test type = 0 at line
+---------------------------------------------------------------
 
-https://github.com/jngadiub/cmgtools-lite/blob/qstarProduction/VVResonances/cfg/runVV_cfg_simple.py#L94
+For full production on lxbatch switch to test type = 0 at line https://github.com/jngadiub/cmgtools-lite/blob/qstarProduction/VVResonances/cfg/runVV_cfg.py#L94
+
+then run
+
+```
+heppy_batch.py -r /store/cmst3/group/exovv/VVtuple/qstarProduction/QstarToQV -o /eos/cms/store/cmst3/group/exovv/VVtuple/qstarProduction/QstarToQV cfg/runVV_cfg.py -b 'bsub -q 8nh -u ${LXBATCHUSER} -o std_output.txt -J QstarToQV  < batchScript.sh' 
+```
+

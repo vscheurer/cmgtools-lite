@@ -74,7 +74,7 @@ from CMGTools.VVResonances.analyzers.tree_cff import *
 
 #-------- SEQUENCE
 
-sequence = cfg.Sequence(coreSequence+[vvAna,metWeightAna,vvSkimmer,vvTreeProducer])
+sequence = cfg.Sequence(coreSequence+[vvAna,vvSkimmer,vvTreeProducer])
 from CMGTools.RootTools.samples.triggers_13TeV_DATA2016 import *
 
 
@@ -85,18 +85,16 @@ triggerFlagsAna.triggerBits ={
     "ELE":triggers_1e_noniso,
     "HT800":triggers_HT800,
     "HT900":triggers_HT900,
-    "JJ":triggers_dijet_fat+triggers_jet_recoverHT,
+    "JJ":triggers_dijet_fat+triggers_jet_recoverHT+triggers_substructure,
     "MET120":triggers_metNoMu120_mhtNoMu120
 }
 
 
 #-------- HOW TO RUN
-test = 1
+test = 0
 if test==1:
     # test a single component, using a single thread.
-#    selectedComponents = [BulkGravToWWToWlepWhad_narrow_2000]
-    selectedComponents = [WprimeToWZToWhadZlep_narrow_2000]
-#    selectedComponents = [BulkGravToZZToZhadZinv_narrow_1400]
+    selectedComponents = [QstarToQW_M600]
     for c in selectedComponents:
         c.files = c.files[:1]
         c.splitFactor = 1
