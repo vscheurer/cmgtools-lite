@@ -22,6 +22,7 @@ parser.add_option("-v","--var",dest="var",help="variable for x",default='')
 parser.add_option("-b","--bins",dest="binsx",type=int,help="bins",default=1)
 parser.add_option("-x","--minx",dest="minx",type=float,help="bins",default=0)
 parser.add_option("-X","--maxx",dest="maxx",type=float,help="conditional bins split by comma",default=1)
+parser.add_option("-w","--weights",dest="weights",help="additional weights",default='')
 
 (options,args) = parser.parse_args()
 
@@ -113,7 +114,7 @@ def smoothTail(hist):
 
 
 
-
+weights_ = options.weights.split(',')
 
 random=ROOT.TRandom3(101082)
 
@@ -135,22 +136,18 @@ for filename in os.listdir(args[0]):
             dataPlotters[-1].addCorrectionFactor('xsec','tree')
             dataPlotters[-1].addCorrectionFactor('genWeight','tree')
             dataPlotters[-1].addCorrectionFactor('puWeight','tree')
-            dataPlotters[-1].addCorrectionFactor('lnujj_sf','branch')
-            dataPlotters[-1].addCorrectionFactor('lnujj_btagWeight','branch')
-            dataPlotters[-1].addCorrectionFactor('truth_genTop_weight','branch')
-
+	    for w in weights_:
+	     if w != '': dataPlotters[-1].addCorrectionFactor(w,'branch')
             dataPlotters[-1].filename=fname
 
             dataPlottersNW.append(TreePlotter(args[0]+'/'+fname+'.root','tree'))
             dataPlottersNW[-1].addCorrectionFactor('puWeight','tree')
             dataPlottersNW[-1].addCorrectionFactor('genWeight','tree')
-            dataPlottersNW[-1].addCorrectionFactor('lnujj_sf','branch')
-            dataPlottersNW[-1].addCorrectionFactor('lnujj_btagWeight','branch')
+	    for w in weights_: 
+             if w != '': dataPlottersNW[-1].addCorrectionFactor(w,'branch')
             dataPlottersNW[-1].filename=fname
-            dataPlottersNW[-1].addCorrectionFactor('truth_genTop_weight','branch')
-
+	    
 data=MergedPlotter(dataPlotters)
-
 
 fcorr=ROOT.TFile(options.res)
 
@@ -236,21 +233,33 @@ histograms=[
 #    histogram_pt_down,
 ]
 
+#NB: l1 is the highest mass jet for JJ, while it is the lepton for LNUJJ
+channel = options.var.split('_')[0] 
+l1 = ''
+l2 = ''
+if channel == 'lnujj':
+ l1 = channel+'_l1'
+ l2 = channel+'_l2'
+elif channel == 'jj':
+ l1 = channel+'_l2'
+ l2 = channel+'_l1'
+
 #ok lets populate!
-
-
-
-
 for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
+
+    print "filename: ", plotter.filename, " preparing central values histo"
+    
     histI=plotter.drawTH1(options.var,options.cut,"1",1,0,1000000000)
     norm=histI.Integral()
+    
     #nominal
     histTMP=ROOT.TH1F("histoTMP","histo",options.binsx,options.minx,options.maxx)
-    if options.var != 'lnujj_gen_partialMass':
-        dataset=plotterNW.makeDataSet('lnujj_l1_pt,lnujj_gen_partialMass,lnujj_l2_partonFlavour,lnujj_l2_gen_pt,'+options.var,options.cut,-1)
-    else:
-        dataset=plotterNW.makeDataSet('lnujj_l1_pt,lnujj_l2_partonFlavour,lnujj_l2_gen_pt,'+options.var,options.cut,-1)
-    datamaker=ROOT.cmg.GaussianSumTemplateMaker1D(dataset,options.var,'lnujj_l2_gen_pt',scale,res,histTMP);
+    
+    if options.var.find('gen_partialMass') == -1: dataset=plotterNW.makeDataSet('%s_pt,%s_gen_partialMass,%s_partonFlavour,%s_gen_pt,'%(l1,channel,l2,l2)+options.var,options.cut,-1)     
+    else: dataset=plotterNW.makeDataSet('%s_pt,%s_partonFlavour,%s_gen_pt,'%(l1,l2,l2)+options.var,options.cut,-1)
+        
+    datamaker=ROOT.cmg.GaussianSumTemplateMaker1D(dataset,options.var,'%s_gen_pt'%(l2),scale,res,histTMP);
+    
     if histTMP.Integral()>0:
         histTMP.Scale(histI.Integral()/histTMP.Integral())
         histogram.Add(histTMP)
@@ -263,29 +272,32 @@ for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
 
     histTMP.Delete()
 
+    print "filename: ", plotter.filename, " preparing res up histo"
 
     #res Up
     histTMP=ROOT.TH1F("histoTMP","histo",options.binsx,options.minx,options.maxx)
-    datamaker=ROOT.cmg.GaussianSumTemplateMaker1D(dataset,options.var,'lnujj_l2_gen_pt',scale,resUp,histTMP);
+    datamaker=ROOT.cmg.GaussianSumTemplateMaker1D(dataset,options.var,'%s_gen_pt'%(l2),scale,resUp,histTMP);
     if histTMP.Integral()>0:
         histTMP.Scale(histI.Integral()/histTMP.Integral())
         histogram_res_up.Add(histTMP)
     histTMP.Delete()
 
 
+    print "filename: ", plotter.filename, " preparing scale up histo"
 
     #scale Up
     histTMP=ROOT.TH1F("histoTMP","histo",options.binsx,options.minx,options.maxx)
-    datamaker=ROOT.cmg.GaussianSumTemplateMaker1D(dataset,options.var,'lnujj_l2_gen_pt',scaleUp,res,histTMP);
+    datamaker=ROOT.cmg.GaussianSumTemplateMaker1D(dataset,options.var,'%s_gen_pt'%(l2),scaleUp,res,histTMP);
     if histTMP.Integral()>0:
         histTMP.Scale(histI.Integral()/histTMP.Integral())
         histogram_scale_up.Add(histTMP)
     histTMP.Delete()
 
+    print "filename: ", plotter.filename, " preparing scale down histo"
 
     #scale Down
     histTMP=ROOT.TH1F("histoTMP","histo",options.binsx,options.minx,options.maxx)
-    datamaker=ROOT.cmg.GaussianSumTemplateMaker1D(dataset,options.var,'lnujj_l2_gen_pt',scaleDown,res,histTMP);
+    datamaker=ROOT.cmg.GaussianSumTemplateMaker1D(dataset,options.var,'%s_gen_pt'%(l2),scaleDown,res,histTMP);
     if histTMP.Integral()>0:
         histTMP.Scale(histI.Integral()/histTMP.Integral())
         histogram_scale_down.Add(histTMP)
@@ -307,6 +319,7 @@ for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
 #        histogram_pt_down.Add(histTMP)
 #    histTMP.Delete()
 
+print " ********** ALL DONE, now save in output file ", options.output
 
 f=ROOT.TFile(options.output,"RECREATE")
 f.cd()
