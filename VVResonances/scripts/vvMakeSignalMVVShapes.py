@@ -29,7 +29,7 @@ parser.add_option("-f","--scaleFactors",dest="scaleFactors",help="Additional sca
 ROOT.gROOT.SetBatch(True)
 
 samples={}
-graphs={'MEAN':ROOT.TGraphErrors(),'SIGMA':ROOT.TGraphErrors(),'ALPHA1':ROOT.TGraphErrors(),'N1':ROOT.TGraphErrors(),'ALPHA2':ROOT.TGraphErrors(),'N2':ROOT.TGraphErrors()}
+graphs={'MEAN':ROOT.TGraphErrors(),'SIGMA':ROOT.TGraphErrors(),'ALPHA':ROOT.TGraphErrors(),'N':ROOT.TGraphErrors(),'SCALESIGMA':ROOT.TGraphErrors(),'f':ROOT.TGraphErrors()}
 
 for filename in os.listdir(args[0]):
     if not (filename.find(options.sample)!=-1):
@@ -59,7 +59,6 @@ scaleFactors=options.scaleFactors.split(',')
 #Now we have the samples: Sort the masses and run the fits
 N=0
 for mass in sorted(samples.keys()):
-    if N == 2: break
     print 'fitting',str(mass) 
     plotter=TreePlotter(args[0]+'/'+samples[mass]+'.root','tree')
     plotter.addCorrectionFactor('genWeight','tree')
@@ -69,17 +68,16 @@ for mass in sorted(samples.keys()):
             plotter.addCorrectionFactor(s,'tree')
        
     fitter=Fitter(['MVV'])
-    fitter.signalResonance('model','MVV')
+    fitter.signalResonanceCBGaus('model','MVV',mass)
     fitter.w.var("MH").setVal(mass)
-    
-    
-    histo = plotter.drawTH1(options.mvv,options.cut,"1",1000,0,8000)
-    
+
+    histo = plotter.drawTH1(options.mvv,options.cut,"1",160,0,8000)
+
     fitter.importBinnedData(histo,['MVV'],'data')
     fitter.fit('model','data',[ROOT.RooFit.SumW2Error(0)])
     fitter.fit('model','data',[ROOT.RooFit.SumW2Error(0)])
-    
-    fitter.projection("model","data","MVV","debugVV_"+options.output+"_"+str(mass)+".root")
+
+    #fitter.projection("model","data","MVV","debugVV_"+options.output+"_"+str(mass)+".root")
     fitter.projection("model","data","MVV","debugVV_"+options.output+"_"+str(mass)+".png")
     
     for var,graph in graphs.iteritems():
@@ -95,4 +93,3 @@ F.cd()
 for name,graph in graphs.iteritems():
     graph.Write(name)
 F.Close()
-            

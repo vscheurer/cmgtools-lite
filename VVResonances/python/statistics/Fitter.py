@@ -454,7 +454,22 @@ class Fitter(object):
             self.w.factory("N2[5]")
         peak_vv = ROOT.RooDoubleCB(name,'modelS',self.w.var(poi),self.w.var('MEAN'),self.w.function('SIGMA'),self.w.var('ALPHA1'),self.w.var('N1'),self.w.var('ALPHA2'),self.w.var('N2'))
         getattr(self.w,'import')(peak_vv,ROOT.RooFit.Rename(name))
-			
+
+
+    def signalResonanceCBGaus(self,name = 'model',poi="MVV",mass=0): 
+        ROOT.gSystem.Load("libHiggsAnalysisCombinedLimit")
+        self.w.factory("MH[1000]")
+        self.w.factory("MEAN[%.1f,%.1f,%.1f]"%(mass,0.8*mass,1.2*mass))
+	self.w.factory("SIGMA[%.1f,20,700]"%(mass*0.05))
+	self.w.factory("SCALESIGMA[2,1.2,10]")
+	gsigma = ROOT.RooFormulaVar("gsigma","gsigma","@0*@1", ROOT.RooArgList(self.w.var('SIGMA'),self.w.var('SCALESIGMA')))
+	getattr(self.w,'import')(gsigma,ROOT.RooFit.Rename('gsigma'))
+        self.w.factory("ALPHA[2,0,20]")
+        self.w.factory("N[100, 0., 300]")
+	self.w.factory("Gaussian::signalResonanceGaus(%s,MEAN,gsigma)"%poi)
+	self.w.factory("CBShape::signalResonanceCB(%s,MEAN,SIGMA,ALPHA,N)"%poi)
+	self.w.factory('SUM::'+name+'(f[0,0,0.35]*signalResonanceGaus,signalResonanceCB)')
+    
     def signal2D(self,name,poi):
         ROOT.gSystem.Load("libHiggsAnalysisCombinedLimit")
 
@@ -915,8 +930,9 @@ class Fitter(object):
 
 
     def fetch(self,var):
-        print self.w.var(var).getVal()
-        print self.w.var(var).getError()
+	self.w.var(var).Print()
+        print "Fetching value " ,self.w.var(var).getVal()  
+        print "Fetching error " ,self.w.var(var).getError()
         return (self.w.var(var).getVal(), self.w.var(var).getError())
 
     def projection(self,model = "model",data="data",poi="x",filename="fit.root",xtitle='x'):
