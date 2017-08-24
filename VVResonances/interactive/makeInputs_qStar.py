@@ -114,13 +114,13 @@ def makeBackgroundShapesMVVConditional(name,filename,template,addCut=""):
 
 									
 makeSignalShapesMVV("JJ_XqW",qWTemplate)
-makeSignalShapesMJJ("JJ_XqW",qWTemplate)
-makeSignalYields("JJ_XqW",qWTemplate,BRqW,{'HP':1.03,'LP':0.95})
-
-makeSignalShapesMVV("JJ_XqZ",qZTemplate)
-makeSignalShapesMJJ("JJ_XqZ",qZTemplate)
-makeSignalYields("JJ_XqZ",qZTemplate,BRqW,{'HP':1.03,'LP':0.95})
-
-makeDetectorResponse("nonRes","JJ",nonResTemplate,cuts['nonres'])
-makeBackgroundShapesMJJ("nonRes","JJ",nonResTemplate,cuts['nonres'])
-makeBackgroundShapesMVVConditional("nonRes","JJ",nonResTemplate,cuts['nonres'])
+# makeSignalShapesMJJ("JJ_XqW",qWTemplate)
+# makeSignalYields("JJ_XqW",qWTemplate,BRqW,{'HP':1.03,'LP':0.95})
+#
+# makeSignalShapesMVV("JJ_XqZ",qZTemplate)
+# makeSignalShapesMJJ("JJ_XqZ",qZTemplate)
+# makeSignalYields("JJ_XqZ",qZTemplate,BRqW,{'HP':1.03,'LP':0.95})
+#
+# makeDetectorResponse("nonRes","JJ",nonResTemplate,cuts['nonres'])
+# makeBackgroundShapesMJJ("nonRes","JJ",nonResTemplate,cuts['nonres'])
+# makeBackgroundShapesMVVConditional("nonRes","JJ",nonResTemplate,cuts['nonres'])

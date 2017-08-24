@@ -454,7 +454,7 @@ class Fitter(object):
             self.w.factory("N2[5]")
         peak_vv = ROOT.RooDoubleCB(name,'modelS',self.w.var(poi),self.w.var('MEAN'),self.w.function('SIGMA'),self.w.var('ALPHA1'),self.w.var('N1'),self.w.var('ALPHA2'),self.w.var('N2'))
         getattr(self.w,'import')(peak_vv,ROOT.RooFit.Rename(name))
-
+			
     def signal2D(self,name,poi):
         ROOT.gSystem.Load("libHiggsAnalysisCombinedLimit")
 
@@ -915,6 +915,8 @@ class Fitter(object):
 
 
     def fetch(self,var):
+        print self.w.var(var).getVal()
+        print self.w.var(var).getError()
         return (self.w.var(var).getVal(), self.w.var(var).getError())
 
     def projection(self,model = "model",data="data",poi="x",filename="fit.root",xtitle='x'):

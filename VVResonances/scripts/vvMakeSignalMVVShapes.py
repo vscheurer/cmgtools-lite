@@ -59,7 +59,7 @@ scaleFactors=options.scaleFactors.split(',')
 #Now we have the samples: Sort the masses and run the fits
 N=0
 for mass in sorted(samples.keys()):
-
+    if N == 2: break
     print 'fitting',str(mass) 
     plotter=TreePlotter(args[0]+'/'+samples[mass]+'.root','tree')
     plotter.addCorrectionFactor('genWeight','tree')
@@ -71,16 +71,19 @@ for mass in sorted(samples.keys()):
     fitter=Fitter(['MVV'])
     fitter.signalResonance('model','MVV')
     fitter.w.var("MH").setVal(mass)
+    
+    
     histo = plotter.drawTH1(options.mvv,options.cut,"1",1000,0,8000)
-
+    
     fitter.importBinnedData(histo,['MVV'],'data')
     fitter.fit('model','data',[ROOT.RooFit.SumW2Error(0)])
     fitter.fit('model','data',[ROOT.RooFit.SumW2Error(0)])
-
+    
     fitter.projection("model","data","MVV","debugVV_"+options.output+"_"+str(mass)+".root")
     fitter.projection("model","data","MVV","debugVV_"+options.output+"_"+str(mass)+".png")
-
+    
     for var,graph in graphs.iteritems():
+
         value,error=fitter.fetch(var)
         graph.SetPoint(N,mass,value)
         graph.SetPointError(N,0.0,error)
