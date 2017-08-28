@@ -15,6 +15,7 @@ purities=['HP','LP']
 qWTemplate="QstarToQW"
 qZTemplate="QstarToQZ"
 BRqW=1.
+BRqZ=1.
 
 dataTemplate="JetHT"
 nonResTemplate="QCD_HT"
@@ -110,17 +111,41 @@ def makeBackgroundShapesMVVConditional(name,filename,template,addCut=""):
   cmd='vvMake2DTemplateWithKernels.py  -o "{rootFile}" -s "{samples}" -c "{cut}"  -v "jj_gen_partialMass,jj_l1_gen_softDrop_mass"  -b {binsMVV} -B {binsMJJ} -x {minMVV} -X {maxMVV} -y {minMJJ} -Y {maxMJJ}  -r {res} samples'.format(rootFile=rootFile,samples=template,cut=cut,binsMVV=binsMVV,minMVV=minMVV,maxMVV=maxMVV,res=resFile,binsMJJ=binsMJJ,minMJJ=minMJJ,maxMJJ=maxMJJ)
   os.system(cmd)
 
+def mergeBackgroundShapes(name,filename):
+
+ for p in purities:
+  inputy=filename+"_"+name+"_MJJ_"+p+".root"	    
+  inputx=filename+"_"+name+"_COND2D_"+p+".root"	       
+  rootFile=filename+"_"+name+"_2D_"+p+".root"	     
+  cmd='vvMergeHistosToPDF2D.py -i "{inputx}" -I "{inputy}" -o "{rootFile}" -s "Scale:ScaleX,PT:PTX,OPT:OPTX,PT2:PTX2,Res:ResX,TOP:TOPX" -S "Scale:ScaleY,PT:PTY,TOP:TOPY,OPT:OPTY,Res:ResY" -C "PT:PTBoth" '.format(rootFile=rootFile,inputx=inputx,inputy=inputy)
+  os.system(cmd)
+
+def makeNormalizations(name,filename,template,data=0,addCut='1',factor=1):
+
+  for p in purities:
+   rootFile=filename+"_"+p+".root"
+   cut='*'.join([cuts['common'],cuts[p],addCut,cuts['acceptance']])
+   cmd='vvMakeData.py -s "{samples}" -d {data} -c "{cut}"  -o "{rootFile}" -v "jj_LV_mass,jj_l1_softDrop_mass" -b "{BINS},{bins}" -m "{MINI},{mini}" -M "{MAXI},{maxi}" -f {factor} -n "{name}"  samples'.format(samples=template,cut=cut,rootFile=rootFile,BINS=binsMVV,bins=binsMJJ,MINI=minMVV,MAXI=maxMVV,mini=minMJJ,maxi=maxMJJ,factor=factor,name=name,data=data)
+   os.system(cmd)
+
+
 
 
 									
 makeSignalShapesMVV("JJ_XqW",qWTemplate)
-# makeSignalShapesMJJ("JJ_XqW",qWTemplate)
-# makeSignalYields("JJ_XqW",qWTemplate,BRqW,{'HP':1.03,'LP':0.95})
-#
-# makeSignalShapesMVV("JJ_XqZ",qZTemplate)
-# makeSignalShapesMJJ("JJ_XqZ",qZTemplate)
-# makeSignalYields("JJ_XqZ",qZTemplate,BRqW,{'HP':1.03,'LP':0.95})
-#
-# makeDetectorResponse("nonRes","JJ",nonResTemplate,cuts['nonres'])
-# makeBackgroundShapesMJJ("nonRes","JJ",nonResTemplate,cuts['nonres'])
-# makeBackgroundShapesMVVConditional("nonRes","JJ",nonResTemplate,cuts['nonres'])
+
+makeSignalShapesMJJ("JJ_XqW",qWTemplate)
+makeSignalYields("JJ_XqW",qWTemplate,BRqW,{'HP':1.03,'LP':0.95})
+
+makeSignalShapesMVV("JJ_XqZ",qZTemplate)
+makeSignalShapesMJJ("JJ_XqZ",qZTemplate)
+makeSignalYields("JJ_XqZ",qZTemplate,BRqZ,{'HP':1.03,'LP':0.95})
+
+makeDetectorResponse("nonRes","JJ",nonResTemplate,cuts['nonres'])
+makeBackgroundShapesMJJ("nonRes","JJ",nonResTemplate,cuts['nonres'])
+makeBackgroundShapesMVVConditional("nonRes","JJ",nonResTemplate,cuts['nonres'])
+mergeBackgroundShapes("nonRes","JJ")
+
+makeNormalizations("nonRes","JJ",nonResTemplate,0,cuts['nonres'],1.0)
+makeNormalizations("data","JJ",dataTemplate,1)
+
