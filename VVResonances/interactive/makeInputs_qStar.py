@@ -133,6 +133,7 @@ def makeNormalizations(name,filename,template,data=0,addCut='1',factor=1):
 
 									
 makeSignalShapesMVV("JJ_XqW",qWTemplate)
+
 makeSignalShapesMJJ("JJ_XqW",qWTemplate)
 makeSignalYields("JJ_XqW",qWTemplate,BRqW,{'HP':1.03,'LP':0.95})
 
@@ -147,3 +148,4 @@ mergeBackgroundShapes("nonRes","JJ")
 
 makeNormalizations("nonRes","JJ",nonResTemplate,0,cuts['nonres'],1.0)
 makeNormalizations("data","JJ",dataTemplate,1)
+
