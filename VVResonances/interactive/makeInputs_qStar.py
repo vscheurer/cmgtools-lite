@@ -46,10 +46,10 @@ def makeSignalShapesMVV(filename,template):
  rootFile=filename+"_MVV.root"
  cmd='vvMakeSignalMVVShapes.py -s "{template}" -c "{cut}"  -o "{rootFile}" -V "jj_LV_mass"  samples'.format(template=template,cut=cut,rootFile=rootFile,minMJJ=minMJJ,maxMJJ=maxMJJ)
  os.system(cmd)
- # jsonFile=filename+"_MVV.json"
- # print 'Making JSON'
- # cmd='vvMakeJSON.py  -o "{jsonFile}" -g "MEAN:pol1,SIGMA:pol1,ALPHA:pol2,N:pol2,SCALESIGMA:pol2,f:pol2" -m 1000 -M 6000  {rootFile}  '.format(jsonFile=jsonFile,rootFile=rootFile)
- # os.system(cmd)
+ jsonFile=filename+"_MVV.json"
+ print 'Making JSON'
+ cmd='vvMakeJSON.py  -o "{jsonFile}" -g "MEAN:pol1,SIGMA:pol1,ALPHA:pol2,N:pol2,SCALESIGMA:pol2,f:pol2" -m 1000 -M 6000  {rootFile}  '.format(jsonFile=jsonFile,rootFile=rootFile)
+ os.system(cmd)
 
 def makeSignalShapesMJJ(filename,template):
 
@@ -132,20 +132,20 @@ def makeNormalizations(name,filename,template,data=0,addCut='1',factor=1):
 
 
 									
-makeSignalShapesMVV("JJ_XqW",qWTemplate)
+# makeSignalShapesMVV("JJ_XqW",qWTemplate)
 
 makeSignalShapesMJJ("JJ_XqW",qWTemplate)
-makeSignalYields("JJ_XqW",qWTemplate,BRqW,{'HP':1.03,'LP':0.95})
-
-makeSignalShapesMVV("JJ_XqZ",qZTemplate)
-makeSignalShapesMJJ("JJ_XqZ",qZTemplate)
-makeSignalYields("JJ_XqZ",qZTemplate,BRqZ,{'HP':1.03,'LP':0.95})
-
-makeDetectorResponse("nonRes","JJ",nonResTemplate,cuts['nonres'])
-makeBackgroundShapesMJJ("nonRes","JJ",nonResTemplate,cuts['nonres'])
-makeBackgroundShapesMVVConditional("nonRes","JJ",nonResTemplate,cuts['nonres'])
-mergeBackgroundShapes("nonRes","JJ")
-
-makeNormalizations("nonRes","JJ",nonResTemplate,0,cuts['nonres'],1.0)
-makeNormalizations("data","JJ",dataTemplate,1)
+# makeSignalYields("JJ_XqW",qWTemplate,BRqW,{'HP':1.03,'LP':0.95})
+#
+# makeSignalShapesMVV("JJ_XqZ",qZTemplate)
+# makeSignalShapesMJJ("JJ_XqZ",qZTemplate)
+# makeSignalYields("JJ_XqZ",qZTemplate,BRqZ,{'HP':1.03,'LP':0.95})
+#
+# makeDetectorResponse("nonRes","JJ",nonResTemplate,cuts['nonres'])
+# makeBackgroundShapesMJJ("nonRes","JJ",nonResTemplate,cuts['nonres'])
+# makeBackgroundShapesMVVConditional("nonRes","JJ",nonResTemplate,cuts['nonres'])
+# mergeBackgroundShapes("nonRes","JJ")
+#
+# makeNormalizations("nonRes","JJ",nonResTemplate,0,cuts['nonres'],1.0)
+# makeNormalizations("data","JJ",dataTemplate,1)
 

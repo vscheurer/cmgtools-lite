@@ -70,16 +70,17 @@ for mass in sorted(samples.keys()):
     fitter=Fitter(['MVV'])
     fitter.signalResonanceCBGaus('model','MVV',mass)
     fitter.w.var("MH").setVal(mass)
+  #  fitter.w.var("MVV").setRange("R1",mass*0.8,mass*1.2)
 
-    histo = plotter.drawTH1(options.mvv,options.cut,"1",160,0,8000)
+    histo = plotter.drawTH1(options.mvv,options.cut+"*(jj_LV_mass>%f&&jj_LV_mass<%f)"%(0.8*mass,1.2*mass),"1",160,1000,8000)#160,mass*0.8,mass*1.2)
 
     fitter.importBinnedData(histo,['MVV'],'data')
-    fitter.fit('model','data',[ROOT.RooFit.SumW2Error(0)])
-    fitter.fit('model','data',[ROOT.RooFit.SumW2Error(0)])
+    fitter.fit('model','data',[ROOT.RooFit.SumW2Error(0)])#,ROOT.RooFit.Range(1000,8000)])
+    fitter.fit('model','data',[ROOT.RooFit.SumW2Error(0)])#,ROOT.RooFit.Range(1000,8000)])
 
     #fitter.projection("model","data","MVV","debugVV_"+options.output+"_"+str(mass)+".root")
-    fitter.projection("model","data","MVV","debugVV_"+options.output+"_"+str(mass)+".png")
-    
+    fitter.projection("model","data","MVV","debugVV_"+options.output+"_"+str(mass)+".png","M_{jj} (GeV)",mass)
+    fitter.w.Print()
     for var,graph in graphs.iteritems():
 
         value,error=fitter.fetch(var)

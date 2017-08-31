@@ -928,17 +928,36 @@ class Fitter(object):
         if len(options)==4:
             self.w.pdf(model).fitTo(self.w.data("data"),options[0],options[1],options[2],options[3])
 
-
+    def getLegend(self):
+        self.legend = ROOT.TLegend(0.7510112,0.7183362,0.8502143,0.919833)
+        self.legend.SetTextSize(0.032)
+        self.legend.SetLineColor(0)
+        self.legend.SetShadowColor(0)
+        self.legend.SetLineStyle(1)
+        self.legend.SetLineWidth(1)
+        self.legend.SetFillColor(0)
+        self.legend.SetFillStyle(0)
+        self.legend.SetMargin(0.35)
+        return self.legend
+	    
     def fetch(self,var):
 	self.w.var(var).Print()
         print "Fetching value " ,self.w.var(var).getVal()  
         print "Fetching error " ,self.w.var(var).getError()
         return (self.w.var(var).getVal(), self.w.var(var).getError())
 
-    def projection(self,model = "model",data="data",poi="x",filename="fit.root",xtitle='x'):
+    def projection(self,model = "model",data="data",poi="x",filename="fit.root",xtitle='x',mass=1000):
         self.frame=self.w.var(poi).frame()
+	# self.w.var(poi).setRange("signal",1000,8000)
+	self.w.pdf(model).setNormRange("NormalizationRangeForfit")
+        gx_Int = self.w.pdf(model).createIntegral(ROOT.RooArgSet(self.w.var(poi)),ROOT.RooFit.NormSet(ROOT.RooArgSet(self.w.var(poi))),ROOT.RooFit.Range("NormalizationRangeForfit"))
+	integral = float (gx_Int.getVal())
+	print "integral = " ,integral
         self.w.data(data).plotOn(self.frame)
-        self.w.pdf(model).plotOn(self.frame)
+        self.w.pdf(model).plotOn(self.frame)#,ROOT.Normalization(ROOT.RooAbsReal.RelativeExpected,1.0))# ROOT.RooFit.Normalization(integral, ROOT.RooAbsReal.NumEvent))
+        self.w.pdf(model).plotOn(self.frame,ROOT.RooFit.Name( "Gaussian" ),ROOT.RooFit.Components("signalResonanceGaus"),ROOT.RooFit.LineStyle(1),ROOT.RooFit.LineColor(ROOT.kRed))#  ,ROOT.RooFit.Normalization( integral, ROOT.RooAbsReal.NumEvent))
+        self.w.pdf(model).plotOn(self.frame,ROOT.RooFit.Name( "CB comp." ),ROOT.RooFit.Components("signalResonanceCB"  ),ROOT.RooFit.LineStyle(1),ROOT.RooFit.LineColor(ROOT.kGreen))#,ROOT.RooFit.Normalization( integral, ROOT.RooAbsReal.NumEvent))
+	self.w.pdf(model).plotOn(self.frame)#,ROOT.Normalization(ROOT.RooAbsReal.RelativeExpected,1.0))# ROOT.RooFit.Normalization(integral, ROOT.RooAbsReal.NumEvent))
         self.c=ROOT.TCanvas("c","c")
         self.c.cd()
         self.frame.Draw()
@@ -946,6 +965,11 @@ class Fitter(object):
         self.frame.GetXaxis().SetTitle(xtitle)
         self.frame.SetTitle('')
         self.c.Draw()
+        self.legend = self.getLegend()
+	self.legend.AddEntry( self.w.pdf(model)                  ," Full PDF","l")
+        self.legend.AddEntry( self.frame.findObject( "Gaussian" ),self.frame.findObject( "Gaussian" ).GetName(),"l")
+        self.legend.AddEntry( self.frame.findObject( "CB comp." ),self.frame.findObject( "CB comp." ).GetName(),"l")
+        self.legend.Draw("same")	    
         self.c.SaveAs(filename)
         pullDist = self.frame.pullHist()
         return self.frame.chiSquare()
