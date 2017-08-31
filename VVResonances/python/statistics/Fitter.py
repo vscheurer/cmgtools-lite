@@ -333,9 +333,9 @@ class Fitter(object):
         self.w.factory("mean[80,50,200]")
         self.w.factory("sigma[10,2,40]")
         self.w.factory("alpha[3,0.5,10]")
-        self.w.factory("n[2]")
+        self.w.factory("n[2.,0.,10.]")
         self.w.factory("alpha2[3,0.5,10]")
-        self.w.factory("n2[2]")
+        self.w.factory("n2[2.,0.,10.]")
 
         peak = ROOT.RooDoubleCB(name+'S','modelS',self.w.var(poi),self.w.var('mean'),self.w.var('sigma'),self.w.var('alpha'),self.w.var('n'),self.w.var("alpha2"),self.w.var("n2"))
         getattr(self.w,'import')(peak,ROOT.RooFit.Rename(name+'S'))
@@ -367,9 +367,9 @@ class Fitter(object):
         self.w.factory("mean[80,50,200]")
         self.w.factory("sigma[10,3,40]")
         self.w.factory("alpha[1,0.5,10]")
-        self.w.factory("n[2]")
+        self.w.factory("n[2.,0.,10.]")
         self.w.factory("alpha2[1,0.5,10]")
-        self.w.factory("n2[2]")
+        self.w.factory("n2[2.,0.,10.]")
         self.w.factory("slope[0.0]")
         self.w.factory("f[0.0]")
 
@@ -949,15 +949,34 @@ class Fitter(object):
     def projection(self,model = "model",data="data",poi="x",filename="fit.root",xtitle='x',mass=1000):
         self.frame=self.w.var(poi).frame()
 	# self.w.var(poi).setRange("signal",1000,8000)
-	self.w.pdf(model).setNormRange("NormalizationRangeForfit")
-        gx_Int = self.w.pdf(model).createIntegral(ROOT.RooArgSet(self.w.var(poi)),ROOT.RooFit.NormSet(ROOT.RooArgSet(self.w.var(poi))),ROOT.RooFit.Range("NormalizationRangeForfit"))
-	integral = float (gx_Int.getVal())
-	print "integral = " ,integral
+	# self.w.pdf(model).setNormRange("NormalizationRangeForfit")
+        # gx_Int = self.w.pdf(model).createIntegral(ROOT.RooArgSet(self.w.var(poi)),ROOT.RooFit.NormSet(ROOT.RooArgSet(self.w.var(poi))),ROOT.RooFit.Range("NormalizationRangeForfit"))
+	# integral = float (gx_Int.getVal())
+	# print "integral = " ,integral
+	print "Prinintg workspace: "
+	self.w.Print()
         self.w.data(data).plotOn(self.frame)
         self.w.pdf(model).plotOn(self.frame)#,ROOT.Normalization(ROOT.RooAbsReal.RelativeExpected,1.0))# ROOT.RooFit.Normalization(integral, ROOT.RooAbsReal.NumEvent))
-        self.w.pdf(model).plotOn(self.frame,ROOT.RooFit.Name( "Gaussian" ),ROOT.RooFit.Components("signalResonanceGaus"),ROOT.RooFit.LineStyle(1),ROOT.RooFit.LineColor(ROOT.kRed))#  ,ROOT.RooFit.Normalization( integral, ROOT.RooAbsReal.NumEvent))
-        self.w.pdf(model).plotOn(self.frame,ROOT.RooFit.Name( "CB comp." ),ROOT.RooFit.Components("signalResonanceCB"  ),ROOT.RooFit.LineStyle(1),ROOT.RooFit.LineColor(ROOT.kGreen))#,ROOT.RooFit.Normalization( integral, ROOT.RooAbsReal.NumEvent))
-	self.w.pdf(model).plotOn(self.frame)#,ROOT.Normalization(ROOT.RooAbsReal.RelativeExpected,1.0))# ROOT.RooFit.Normalization(integral, ROOT.RooAbsReal.NumEvent))
+        self.legend = self.getLegend()
+	self.legend.AddEntry( self.w.pdf(model)," Full PDF","l")
+	
+	self.w.pdf(model).plotOn(self.frame,ROOT.RooFit.Name( "signalResonanceGaus" ),ROOT.RooFit.Components("signalResonanceGaus"),ROOT.RooFit.LineStyle(1),ROOT.RooFit.LineColor(ROOT.kRed))#  ,ROOT.RooFit.Normalization( integral, ROOT.RooAbsReal.NumEvent))
+	if self.frame.findObject( "signalResonanceGaus"):self.legend.AddEntry( self.frame.findObject( "signalResonanceGaus" ),"Gaussian","l")
+	else: print "No model Gaussian in WS"
+	
+	self.w.pdf(model).plotOn(self.frame,ROOT.RooFit.Name( "signalResonanceCB" ),ROOT.RooFit.Components("signalResonanceCB"  ),ROOT.RooFit.LineStyle(1),ROOT.RooFit.LineColor(ROOT.kGreen))#,ROOT.RooFit.Normalization( integral, ROOT.RooAbsReal.NumEvent))
+	if self.frame.findObject( "signalResonanceCB"):self.legend.AddEntry( self.frame.findObject( "signalResonanceCB" ),"CB comp.","l")
+	else: print "No model CB in WS"
+	
+	self.w.pdf(model).plotOn(self.frame,ROOT.RooFit.Name( "modelS" ),ROOT.RooFit.Components("modelS"  ),ROOT.RooFit.LineStyle(1),ROOT.RooFit.LineColor(ROOT.kRed))#,ROOT.RooFit.Normalization( integral, ROOT.RooAbsReal.NumEvent))
+	if self.frame.findObject( "modelS"):self.legend.AddEntry( self.frame.findObject( "modelS" ),"Signal comp.","l")
+	else: print "No modelS in WS"
+	
+	self.w.pdf(model).plotOn(self.frame,ROOT.RooFit.Name( "modelB" ),ROOT.RooFit.Components("modelB"),ROOT.RooFit.LineStyle(1),ROOT.RooFit.LineColor(ROOT.kGreen))#,ROOT.RooFit.Normalization( integral, ROOT.RooAbsReal.NumEvent))
+	if self.frame.findObject( "modelB"):self.legend.AddEntry( self.frame.findObject( "modelB" ),"BG comp.","l")
+	else: print "No modelB in WS"
+	
+	self.w.pdf(model).plotOn(self.frame)
         self.c=ROOT.TCanvas("c","c")
         self.c.cd()
         self.frame.Draw()
@@ -965,10 +984,9 @@ class Fitter(object):
         self.frame.GetXaxis().SetTitle(xtitle)
         self.frame.SetTitle('')
         self.c.Draw()
-        self.legend = self.getLegend()
-	self.legend.AddEntry( self.w.pdf(model)                  ," Full PDF","l")
-        self.legend.AddEntry( self.frame.findObject( "Gaussian" ),self.frame.findObject( "Gaussian" ).GetName(),"l")
-        self.legend.AddEntry( self.frame.findObject( "CB comp." ),self.frame.findObject( "CB comp." ).GetName(),"l")
+                        
+        
+       
         self.legend.Draw("same")	    
         self.c.SaveAs(filename)
         pullDist = self.frame.pullHist()
