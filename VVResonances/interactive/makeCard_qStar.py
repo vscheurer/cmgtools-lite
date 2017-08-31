@@ -21,7 +21,7 @@ for p in purities:
      card.addMJJSignalParametricShape("Zqq","MJ","JJ_XqZ_MJJ_"+p+".json",{'CMS_scale_prunedj':1},{'CMS_res_prunedj':1.0})
 
      card.addParametricYieldWithUncertainty("XqW",0,"JJ_XqW_"+p+"_yield.json",1,'CMS_tau21_PtDependence','((0.054/0.041)*(-log(MH/600)))',0.041)
-     #card.addParametricYieldWithUncertainty("XqZ",0,"JJ_XqZ_"+p+"_yield.json",1,'CMS_tau21_PtDependence','((0.054/0.041)*(-log(MH/600)))',0.041)
+     card.addParametricYieldWithUncertainty("XqZ",0,"JJ_XqZ_"+p+"_yield.json",1,'CMS_tau21_PtDependence','((0.054/0.041)*(-log(MH/600)))',0.041)
  else:
      card.addMJJSignalParametricShapeNOEXP("Wqq","MJ","JJ_XqW_MJJ_"+p+".json",{'CMS_scale_prunedj':1},{'CMS_res_prunedj':1.0})#
      card.addMJJSignalParametricShapeNOEXP("Zqq","MJ","JJ_XqZ_MJJ_"+p+".json",{'CMS_scale_prunedj':1},{'CMS_res_prunedj':1.0})#
