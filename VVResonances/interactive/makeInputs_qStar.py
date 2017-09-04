@@ -3,8 +3,7 @@ import os,sys
 
 cuts={}
 
-cuts['common'] = '((HLT_JJ)*(run>500) + (run<500))*(njj>0&&Flag_goodVertices&&Flag_CSCTightHaloFilter&&Flag_HBHENoiseFilter&&Flag_HBHENoiseIsoFilter&&Flag_eeBadScFilter&&jj_LV_mass>1000&&abs(jj_l1_eta-jj_l2_eta)<1.3)'
-
+cuts['common'] = '((HLT_JJ)*(run>500) + (run<500))*(njj>0&&Flag_goodVertices&&Flag_CSCTightHaloFilter&&Flag_HBHENoiseFilter&&Flag_HBHENoiseIsoFilter&&Flag_eeBadScFilter&&jj_LV_mass>1000&&abs(jj_l1_eta-jj_l2_eta)<1.3&&jj_l1_softDrop_mass>0.)'
 cuts['HP'] = '(jj_l1_tau2/jj_l1_tau1<0.35)'
 cuts['LP'] = '(jj_l1_tau2/jj_l1_tau1>0.35 && jj_l1_tau2/jj_l1_tau1<0.75)'
 
@@ -80,18 +79,19 @@ def makeSignalYields(filename,template,branchingFraction,sfP = {'HP':1.0,'LP':1.
   os.system(cmd)
 
 def makeDetectorResponse(name,filename,template,addCut="1"):
-
- #first parameterize detector response
- cut='*'.join([cuts['common'],'jj_l1_gen_softDrop_mass>10&&jj_gen_partialMass>0',addCut])
- resFile=filename+"_"+name+"_detectorResponse.root"	       
- cmd='vvMake2DDetectorParam.py  -o "{rootFile}" -s "{samples}" -c "{cut}"  -v "jj_LV_mass,jj_l1_softDrop_mass"  -g "jj_gen_partialMass,jj_l1_gen_softDrop_mass,jj_l1_gen_pt"  -b "150,200,250,300,350,400,450,500,600,700,800,900,1000,1500,2000,5000"   samples'.format(rootFile=resFile,samples=template,cut=cut,binsMVV=binsMVV,minMVV=minMVV,maxMVV=maxMVV,tag=name)
- os.system(cmd)
+ for p in purities:
+	 print "=========== PURITY: ", p
+	 #first parameterize detector response
+	 cut='*'.join([cuts['common'],cuts[p],'jj_l1_gen_softDrop_mass>10&&jj_gen_partialMass>0',addCut])
+	 resFile=filename+"_"+name+"_detectorResponse_"+p+".root"	       
+	 cmd='vvMake2DDetectorParam.py  -o "{rootFile}" -s "{samples}" -c "{cut}"  -v "jj_LV_mass,jj_l1_softDrop_mass"  -g "jj_gen_partialMass,jj_l1_gen_softDrop_mass,jj_l1_gen_pt"  -b "150,200,250,300,350,400,450,500,600,700,800,900,1000,1500,2000,5000"   samples'.format(rootFile=resFile,samples=template,cut=cut,binsMVV=binsMVV,minMVV=minMVV,maxMVV=maxMVV,tag=name)
+	 os.system(cmd)
  
 def makeBackgroundShapesMJJ(name,filename,template,addCut="1"):
  
- resFile=filename+"_"+name+"_detectorResponse.root"
  
  for p in purities:
+  resFile=filename+"_"+name+"_detectorResponse_"+p+".root"	
 
   print "=========== PURITY: ", p
   cut='*'.join([cuts['common'],cuts[p],addCut,cuts['acceptanceGENMJJ']])
@@ -128,12 +128,8 @@ def makeNormalizations(name,filename,template,data=0,addCut='1',factor=1):
    cmd='vvMakeData.py -s "{samples}" -d {data} -c "{cut}"  -o "{rootFile}" -v "jj_LV_mass,jj_l1_softDrop_mass" -b "{BINS},{bins}" -m "{MINI},{mini}" -M "{MAXI},{maxi}" -f {factor} -n "{name}"  samples'.format(samples=template,cut=cut,rootFile=rootFile,BINS=binsMVV,bins=binsMJJ,MINI=minMVV,MAXI=maxMVV,mini=minMJJ,maxi=maxMJJ,factor=factor,name=name,data=data)
    os.system(cmd)
 
-
-
-
 									
 makeSignalShapesMVV("JJ_XqW",qWTemplate)
-
 makeSignalShapesMJJ("JJ_XqW",qWTemplate)
 makeSignalYields("JJ_XqW",qWTemplate,BRqW,{'HP':1.03,'LP':0.95})
 
