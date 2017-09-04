@@ -3,13 +3,13 @@ import os,sys
 
 cuts={}
 
-cuts['common'] = '((HLT_JJ)*(run>500) + (run<500))*(njj>0&&Flag_goodVertices&&Flag_CSCTightHaloFilter&&Flag_HBHENoiseFilter&&Flag_HBHENoiseIsoFilter&&Flag_eeBadScFilter&&jj_LV_mass>1000&&abs(jj_l1_eta-jj_l2_eta)<1.3&&jj_l1_softDrop_mass>0)'
+cuts['common'] = '((HLT_JJ)*(run>500) + (run<500))*(njj>0&&Flag_goodVertices&&Flag_CSCTightHaloFilter&&Flag_HBHENoiseFilter&&Flag_HBHENoiseIsoFilter&&Flag_eeBadScFilter&&jj_LV_mass>1000&&abs(jj_l1_eta-jj_l2_eta)<1.3&&jj_l1_softDrop_mass>0.)'
 cuts['HP'] = '(jj_l1_tau2/jj_l1_tau1<0.35)'
 cuts['LP'] = '(jj_l1_tau2/jj_l1_tau1>0.35 && jj_l1_tau2/jj_l1_tau1<0.75)'
 
 cuts['nonres'] = '1'
 
-purities=['HP', 'LP']
+purities=['HP','LP']
 
 qWTemplate="QstarToQW"
 qZTemplate="QstarToQZ"
@@ -17,7 +17,7 @@ BRqW=1.
 BRqZ=1.
 
 dataTemplate="JetHT"
-nonResTemplate="QCD_Pt_"
+nonResTemplate="QCD_HT"
 
 minMJJ=30.0
 maxMJJ=610.0

@@ -249,7 +249,6 @@ elif channel == 'jj':
 
 #ok lets populate!
 for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
-    # if  not plotter.filename.find("QCD_Pt_300to470") != -1: continue
 
     print "filename: ", plotter.filename, " preparing central values histo"
    
