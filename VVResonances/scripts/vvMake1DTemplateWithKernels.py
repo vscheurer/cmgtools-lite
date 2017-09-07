@@ -24,64 +24,7 @@ parser.add_option("-x","--minx",dest="minx",type=float,help="bins",default=0)
 parser.add_option("-X","--maxx",dest="maxx",type=float,help="conditional bins split by comma",default=1)
 parser.add_option("-w","--weights",dest="weights",help="additional weights",default='')
 
-(options,args) = parser.parse_args()
-
-
-
-def mirror(histo,histoNominal,name):
-    newHisto =copy.deepcopy(histoNominal) 
-    newHisto.SetName(name)
-    intNominal=histoNominal.Integral()
-    intUp = histo.Integral()
-    for i in range(1,histo.GetNbinsX()+1):
-        up=histo.GetBinContent(i)/intUp
-        nominal=histoNominal.GetBinContent(i)/intNominal
-        newHisto.SetBinContent(i,nominal*nominal/up)
-    return newHisto        
-
-def unequalScale(histo,name,alpha,power=1):
-    newHistoU =copy.deepcopy(histo) 
-    newHistoU.SetName(name+"Up")
-    newHistoD =copy.deepcopy(histo) 
-    newHistoD.SetName(name+"Down")
-    for i in range(1,histo.GetNbinsX()+1):
-        x= histo.GetXaxis().GetBinCenter(i)
-        nominal=histo.GetBinContent(i)
-        factor = alpha*pow(x,power) 
-        newHistoU.SetBinContent(i,nominal*factor)
-        newHistoD.SetBinContent(i,nominal/factor)
-    return newHistoU,newHistoD        
-
-
-def smoothTailOLD(hist):
-    #smart smoother ! Find the last hit with data.
-    #fIT BEFORE THAT
-    #eXTRAPOLATE AFTER THAT
-
-    bin_1200=hist.GetXaxis().FindBin(1200)
-    if bin_1200>=hist.GetNbinsX()+1:
-        return
-
-    if hist.Integral()==0:
-        print "Well we have  0 integrl for the hist ",hist.GetName()
-        return
-    expo=ROOT.TF1("expo","[0]*((1-x/13000.0)^[1])/(x/13000.0)^[2]",1000,8000)
-    expo.SetParameters(1,1,1)
-    expo.SetParLimits(0,0,1)
-    expo.SetParLimits(1,0.1,100)
-    expo.SetParLimits(2,0.1,100)
-
-#    expo=ROOT.TF1("func","expo",0,5000)
-    for j in range(1,hist.GetNbinsX()+1):
-        if hist.GetBinContent(j)/hist.Integral()<0.0005:
-            hist.SetBinError(j,1.8)
-
-    hist.Fit(expo,"","",1000,8000)
-    hist.Fit(expo,"","",1000,8000)
-    for j in range(1,hist.GetNbinsX()+1):
-        x=hist.GetXaxis().GetBinCenter(j)
-        if x>1000:
-            hist.SetBinContent(j,expo.Eval(x))
+(options,args) = parser.parse_args()     
 
 def smoothTail(hist):
 
@@ -177,17 +120,9 @@ histograms=[
     mjet
 	]
 
-#NB: l1 is the highest mass jet for JJ, while it is the lepton for LNUJJ
 channel = options.var.split('_')[0] 
-l1 = ''
-l2 = ''
-if channel == 'lnujj':
- l1 = channel+'_l1'
- l2 = channel+'_l2'
-elif channel == 'jj':
- l1 = channel+'_l2'
- l2 = channel+'_l1'
 
+maxEvents = -1
 #ok lets populate!
 for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
 
@@ -199,16 +134,12 @@ for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
 			histI=plotter.drawTH1(options.var,options.cut,"1",1,0,1000000000)
 			norm=histI.Integral()
 			
-			if options.var.find('gen_partialMass') == -1:
-			 histI2=plotter.drawTH1('%s_softDrop_mass'%l2,options.cut,"1",options.binsx,options.minx,options.maxx)
-			else:  
-			 histI2=plotter.drawTH1('%s_gen_partialMass'%channel,options.cut,"1",options.binsx,options.minx,options.maxx)
-
-			if options.var.find('gen_partialMass') == -1: dataset=plotterNW.makeDataSet('%s_pt,%s_gen_partialMass,%s_gen_pt,jj_l1_softDrop_mass,'%(l1,channel,l2)+options.var,options.cut,-1)     
-			else: dataset=plotterNW.makeDataSet('%s_pt,%s_gen_pt,'%(l1,l2)+options.var,options.cut,-1)
+			histI2=plotter.drawTH1('jj_l1_softDrop_mass',options.cut,"1",options.binsx,options.minx,options.maxx)
+			
+			dataset=plotterNW.makeDataSet('jj_gen_partialMass,jj_l1_gen_pt,'+options.var,options.cut,maxEvents)     
 			
 			histTMP=ROOT.TH1F("histoTMP","histo",options.binsx,options.minx,options.maxx)    
-			datamaker=ROOT.cmg.GaussianSumTemplateMaker1D(dataset,options.var,'%s_gen_pt'%(l2),scale,res,histTMP);
+			datamaker=ROOT.cmg.GaussianSumTemplateMaker1D(dataset,options.var,'jj_l1_gen_pt',scale,res,histTMP);
 			
 			if histTMP.Integral()>0:
 			    histTMP.Scale(histI.Integral()/histTMP.Integral())
@@ -226,11 +157,10 @@ for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
 			histI=plotter.drawTH1(options.var,options.cut,"1",1,0,1000000000)
 			norm=histI.Integral()
 
-			if options.var.find('gen_partialMass') == -1: dataset=plotterNW.makeDataSet('%s_pt,%s_gen_partialMass,%s_gen_pt,jj_l1_softDrop_mass,'%(l1,channel,l2)+options.var,options.cut,-1)     
-			else: dataset=plotterNW.makeDataSet('%s_pt,%s_gen_pt,'%(l1,l2)+options.var,options.cut,-1)
+			dataset=plotterNW.makeDataSet('jj_gen_partialMass,jj_l1_gen_pt,'+options.var,options.cut,maxEvents)     
 			
 			histTMP=ROOT.TH1F("histoTMP","histo",options.binsx,options.minx,options.maxx)    
-			datamaker=ROOT.cmg.GaussianSumTemplateMaker1D(dataset,options.var,'%s_gen_pt'%(l2),scale,res,histTMP);
+			datamaker=ROOT.cmg.GaussianSumTemplateMaker1D(dataset,options.var,'jj_l1_gen_pt',scale,res,histTMP);
 			
 			if histTMP.Integral()>0:
 			    histTMP.Scale(histI.Integral()/histTMP.Integral())
@@ -247,11 +177,10 @@ for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
 			histI=plotter.drawTH1(options.var,options.cut,"1",1,0,1000000000)
 			norm=histI.Integral()
 
-			if options.var.find('gen_partialMass') == -1: dataset=plotterNW.makeDataSet('%s_pt,%s_gen_partialMass,%s_gen_pt,jj_l1_softDrop_mass,'%(l1,channel,l2)+options.var,options.cut,-1)     
-			else: dataset=plotterNW.makeDataSet('%s_pt,%s_gen_pt,'%(l1,l2)+options.var,options.cut,-1)
+			dataset=plotterNW.makeDataSet('jj_gen_partialMass,jj_l1_gen_pt,'+options.var,options.cut,maxEvents)     
 			
 			histTMP=ROOT.TH1F("histoTMP","histo",options.binsx,options.minx,options.maxx)    
-			datamaker=ROOT.cmg.GaussianSumTemplateMaker1D(dataset,options.var,'%s_gen_pt'%(l2),scale,res,histTMP);
+			datamaker=ROOT.cmg.GaussianSumTemplateMaker1D(dataset,options.var,'jj_l1_gen_pt',scale,res,histTMP);
 			
 			if histTMP.Integral()>0:
 			    histTMP.Scale(histI.Integral()/histTMP.Integral())
