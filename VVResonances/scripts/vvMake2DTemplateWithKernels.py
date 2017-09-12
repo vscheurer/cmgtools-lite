@@ -25,6 +25,19 @@ parser.add_option("-y","--miny",dest="miny",type=float,help="bins",default=0)
 parser.add_option("-Y","--maxy",dest="maxy",type=float,help="conditional bins split by comma",default=1)
 parser.add_option("-w","--weights",dest="weights",help="additional weights",default='')
 
+
+def mirror(histo,histoNominal,name):
+    newHisto =copy.deepcopy(histoNominal) 
+    newHisto.SetName(name)
+    intNominal=histoNominal.Integral()
+    intUp = histo.Integral()
+    for i in range(1,histo.GetNbinsX()+1):
+        for j in range(1,histo.GetNbinsY()+1):
+            up=histo.GetBinContent(i,j)/intUp
+            nominal=histoNominal.GetBinContent(i,j)/intNominal
+            newHisto.SetBinContent(i,j,nominal*nominal/up)
+    return newHisto       
+	
 def expandHisto(histo,options):
     histogram=ROOT.TH2F(histo.GetName(),"histo",options.binsx,options.minx,options.maxx,options.binsy,options.miny,options.maxy)
     for i in range(1,histo.GetNbinsX()+1):
@@ -128,10 +141,10 @@ ptBins=[0,150,200,250,300,350,400,450,500,550,600,700,800,900,1000,1500,2000,500
 
 
 
-mjet_mvv			=	ROOT.TH2F("mjet_mvv"		,"mjet_mvv"			,len(binsx)-1,options.minx,options.maxx,len(binsy)-1,options.miny,options.maxy)
-histogram			=	ROOT.TH2F("histo"			,"histo"			,len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
-histogram_altshape1	=	ROOT.TH2F("histo_altshape1"	,"histo_altshape1"	,len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
-histogram_altshape2	=	ROOT.TH2F("histo_altshape2"	,"histo_altshape2"	,len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+mjet_mvv			=	ROOT.TH2F("mjet_mvv"			,"mjet_mvv"			,len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+histogram			=	ROOT.TH2F("histo"				,"histo"			,len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+histogram_altshape1	=	ROOT.TH2F("histo_altshape1"		,"histo_altshape1"	,len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+histogram_altshape2	=	ROOT.TH2F("histo_altshape2up"	,"histo_altshape2up",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
 
 
 #systematics
@@ -148,7 +161,7 @@ maxEvents = -1
 varsDataSet = 'jj_l1_gen_pt,'+variables[0]+','+variables[1]
 
 for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
-	# if plotter.filename.find("QCD_Pt_3200toInf") ==-1: continue
+	# if plotter.filename.find("QCD_Pt_") ==-1: continue
 	#Nominal histogram
 	if plotter.filename.find(sampleTypes[0]) != -1:
 		print "Preparing nominal histogram for sampletype " ,sampleTypes[0]
@@ -156,8 +169,8 @@ for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
 		
 		histI=plotter.drawTH1(variables[0],options.cut,"1",1,0,1000000000)
 		norm=histI.Integral()
-		
-		histI2D=plotter.drawTH2(variables[1]+":"+variables[0],options.cut,"1",len(binsx)-1,options.minx,options.maxx,len(binsy)-1,options.miny,options.maxy,"Gen M_{qV} mass","GeV","Gen softdrop mass","GeV","COLZ" )
+		#y:x
+		histI2D=plotter.drawTH2Binned("jj_l1_softDrop_mass:jj_LV_mass",options.cut,"1",array('f',binsx),array('f',binsy),"M_{qV} mass","GeV","Softdrop mass","GeV","COLZ" )
 		histTMP=ROOT.TH2F("histoTMP","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
 		
 		
@@ -237,6 +250,12 @@ for hist in histograms:
 	finalHistograms[hist.GetName()]=expanded
 
 mjet_mvv.Write()
+
+##Mirror Herwig shape
+histogram_altshape2down=mirror(finalHistograms['histo_altshape2up'],finalHistograms['histo'],"histo_altshape2down")
+conditional(histogram_altshape2down)
+histogram_altshape2down.Write()
+
 
 # plotname = "debug_massBin%i_"%i+hist.GetName()+options.output.replace(".root",".png")
 # print "Drawing debugging plot ", plotname
