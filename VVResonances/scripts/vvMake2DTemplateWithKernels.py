@@ -144,7 +144,7 @@ histograms=[
 
 #ok lets populate!
 
-maxEvents = 100
+maxEvents = -1
 varsDataSet = 'jj_l1_gen_pt,'+variables[0]+','+variables[1]
 
 for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
