@@ -26,6 +26,18 @@ parser.add_option("-w","--weights",dest="weights",help="additional weights",defa
 
 (options,args) = parser.parse_args()     
 
+
+def mirror(histo,histoNominal,name):
+    newHisto =copy.deepcopy(histoNominal) 
+    newHisto.SetName(name)
+    intNominal=histoNominal.Integral()
+    intUp = histo.Integral()
+    for i in range(1,histo.GetNbinsX()+1):
+        up=histo.GetBinContent(i)/intUp
+        nominal=histoNominal.GetBinContent(i)/intNominal
+        newHisto.SetBinContent(i,nominal*nominal/up)
+    return newHisto      
+	
 def smoothTail(hist):
 
     bin_1200=hist.GetXaxis().FindBin(1200)
@@ -107,10 +119,10 @@ mjet.Sumw2()
 histogram=ROOT.TH1F("histo","histo",options.binsx,options.minx,options.maxx)
 histogram.Sumw2()
 
-histogram_altshape1=ROOT.TH1F("histo_altshape1","histo",options.binsx,options.minx,options.maxx)
-histogram_altshape1.Sumw2()
+# histogram_altshape1=ROOT.TH1F("histo_altshape1","histo",options.binsx,options.minx,options.maxx)
+# histogram_altshape1.Sumw2()
 
-histogram_altshape2=ROOT.TH1F("histo_altshape2","histo",options.binsx,options.minx,options.maxx)
+histogram_altshape2=ROOT.TH1F("histo_altshapeUp","histo",options.binsx,options.minx,options.maxx)
 histogram_altshape2.Sumw2()
 
 histograms=[
@@ -148,25 +160,25 @@ for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
 
 			histTMP.Delete()
  		 
-		#Alternative shape 1 (e.g Madgraph+Pythia8)
-    if len(sampleTypes)<2: continue	
-    elif plotter.filename.find(sampleTypes[1]) != -1: 
-			print "Preparing alternative shapes for sampletype " ,sampleTypes[1]
-			print "filename: ", plotter.filename, " preparing alternate shape histo"
-			
-			histI=plotter.drawTH1(options.var,options.cut,"1",1,0,1000000000)
-			norm=histI.Integral()
-
-			dataset=plotterNW.makeDataSet('jj_gen_partialMass,jj_l1_gen_pt,'+options.var,options.cut,maxEvents)     
-			
-			histTMP=ROOT.TH1F("histoTMP","histo",options.binsx,options.minx,options.maxx)    
-			datamaker=ROOT.cmg.GaussianSumTemplateMaker1D(dataset,options.var,'jj_l1_gen_pt',scale,res,histTMP);
-			
-			if histTMP.Integral()>0:
-			    histTMP.Scale(histI.Integral()/histTMP.Integral())
-			    histogram_altshape1.Add(histTMP)
-
-			histTMP.Delete()
+		# #Alternative shape 1 (e.g Madgraph+Pythia8)
+	#     if len(sampleTypes)<2: continue
+	#     elif plotter.filename.find(sampleTypes[1]) != -1:
+	# 		print "Preparing alternative shapes for sampletype " ,sampleTypes[1]
+	# 		print "filename: ", plotter.filename, " preparing alternate shape histo"
+	#
+	# 		histI=plotter.drawTH1(options.var,options.cut,"1",1,0,1000000000)
+	# 		norm=histI.Integral()
+	#
+	# 		dataset=plotterNW.makeDataSet('jj_gen_partialMass,jj_l1_gen_pt,'+options.var,options.cut,maxEvents)
+	#
+	# 		histTMP=ROOT.TH1F("histoTMP","histo",options.binsx,options.minx,options.maxx)
+	# 		datamaker=ROOT.cmg.GaussianSumTemplateMaker1D(dataset,options.var,'jj_l1_gen_pt',scale,res,histTMP);
+	#
+	# 		if histTMP.Integral()>0:
+	# 		    histTMP.Scale(histI.Integral()/histTMP.Integral())
+	# 		    histogram_altshape1.Add(histTMP)
+	#
+	# 		histTMP.Delete()
 		
 		#Alternative shape 2	(e.g Herwig++)
     if len(sampleTypes)<3: continue
@@ -197,8 +209,13 @@ for hist in histograms:
 	# smoothTail(hist)
 	hist.Write(hist.GetName())
 	finalHistograms[hist.GetName()]=hist
+
+histogram_altshapeDown=mirror(finalHistograms['histo_altshapeUp'],finalHistograms['histo'],"histo_altshapeDown")
+histogram_altshapeDown.Write()
+
 f.Close()
 
+histograms.append(histogram_altshapeDown)
 print "Drawing debugging plot ", "debug_"+options.output.replace(".root",".png") 
 canv = ROOT.TCanvas("c1","c1",800,600)
 leg = ROOT.TLegend(0.55010112,0.7183362,0.70202143,0.919833)
