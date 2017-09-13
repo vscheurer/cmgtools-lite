@@ -135,16 +135,16 @@ variables=options.vars.split(',')
 binsx=[]
 for i in range(0,options.binsx+1):
     binsx.append(options.minx+i*(options.maxx-options.minx)/options.binsx)
-binsy=[30.,40.,50.,60.,70.,80.,90.,100.,110.,120.,140.,150.,160.,180.,210., 240., 270., 300., 330., 360., 390., 410., 440., 470., 500., 530., 560., 590.,610.]    
+binsy=[30.,40.,50.,60.,70.,80.,90.,100.,110.,120.,140.,150.,160.,180.,210., 240., 270., 300., 330., 360., 390., 410., 440., 470., 500., 530., 560., 590.,610.]    #28
 ptBins=[0,150,200,250,300,350,400,450,500,550,600,700,800,900,1000,1500,2000,5000]
 
 
 
 
-mjet_mvv			=	ROOT.TH2F("mjet_mvv"			,"mjet_mvv"			,len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
-histogram			=	ROOT.TH2F("histo"				,"histo"			,len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
-histogram_altshape1	=	ROOT.TH2F("histo_altshape1"		,"histo_altshape1"	,len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
-histogram_altshape2	=	ROOT.TH2F("histo_altshape2up"	,"histo_altshape2up",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+mjet_mvv				=	ROOT.TH2F("mjet_mvv"			,"mjet_mvv" ,options.binsx,options.minx,options.maxx,options.binsy,options.miny,options.maxy)
+histogram				=	ROOT.TH2F("histo"				,"histo"	,len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+histogram_altshape1		=	ROOT.TH2F("histo_altshape1"		,"histo"	,len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+histogram_altshape2		=	ROOT.TH2F("histo_altshape2up"	,"histo"	,len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
 
 
 #systematics
@@ -158,10 +158,10 @@ histograms=[
 #ok lets populate!
 
 maxEvents = -1
-varsDataSet = 'jj_l1_gen_pt,'+variables[0]+','+variables[1]
+varsDataSet = 'jj_l1_gen_pt,'+variables[1]+','+variables[0]
 
 for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
-	# if plotter.filename.find("QCD_Pt_") ==-1: continue
+	# if plotter.filename.find("QCD_Pt-") ==-1 and plotter.filename.find("QCD_Pt_1000") ==-1 and plotter.filename.find("QCD_HT1000") ==-1 :continue
 	#Nominal histogram
 	if plotter.filename.find(sampleTypes[0]) != -1:
 		print "Preparing nominal histogram for sampletype " ,sampleTypes[0]
@@ -170,23 +170,26 @@ for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
 		histI=plotter.drawTH1(variables[0],options.cut,"1",1,0,1000000000)
 		norm=histI.Integral()
 		#y:x
-		histI2D=plotter.drawTH2Binned("jj_l1_softDrop_mass:jj_LV_mass",options.cut,"1",array('f',binsx),array('f',binsy),"M_{qV} mass","GeV","Softdrop mass","GeV","COLZ" )
+		histI2D=plotter.drawTH2("jj_l1_softDrop_mass:jj_LV_mass",options.cut,"1",options.binsx,options.minx,options.maxx,options.binsy,options.miny,options.maxy,"M_{qV} mass","GeV","Softdrop mass","GeV","COLZ" )
 		histTMP=ROOT.TH2F("histoTMP","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
-		
-		
+
+
 		print " - Creating dataset - "
 		dataset=plotterNW.makeDataSet(varsDataSet,options.cut,maxEvents)
-		
+
 		print " - Creating gaussian template - "
 		datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'jj_l1_gen_pt',scale_x,scale_y,res_x,res_y,histTMP)
-		
+
 		if histTMP.Integral()>0:
 			histTMP.Scale(histI.Integral()/histTMP.Integral())
 			histogram.Add(histTMP)
+		if histI2D.Integral()>0:
+			histI2D.Scale(histI.Integral()/histI2D.Integral())
 			mjet_mvv.Add(histI2D)
-			
-		histTMP.Delete()
 		
+		histI2D.Delete()	
+		histTMP.Delete()
+
 	#Alternative shape 1 (e.g Madgraph+Pythia8)
 	elif plotter.filename.find(sampleTypes[1]) != -1:
 		print "Preparing alternative shapes for sampletype " ,sampleTypes[1]
@@ -239,16 +242,19 @@ for hist in histograms:
 	print "Working on histogram " ,hist.GetName()
 	hist.Write(hist.GetName()+"_coarse")
 	#smooth
-	print "Smoothing tail"
+	print "Smoothing tail for " ,hist.GetName()
 	smoothTail(hist)
-	print "Creating conditional histogram"
+	print "Creating conditional histogram for ",hist.GetName()
 	conditional(hist)
-	print "Expanding...."
+	print "Expanding for " ,hist.GetName()
 	expanded=expandHisto(hist,options)
 	conditional(expanded)
 	expanded.Write()
 	finalHistograms[hist.GetName()]=expanded
 
+conditional(mjet_mvv)
+expanded=expandHisto(mjet_mvv,options)
+conditional(expanded)
 mjet_mvv.Write()
 
 ##Mirror Herwig shape
