@@ -37,9 +37,6 @@ cuts['acceptanceGENMJJ']= "(jj_l1_gen_softDrop_mass>{minMJJ}&&jj_l1_gen_softDrop
 
 cuts['acceptanceGENMVV']= "(jj_gen_partialMass>{minMVV}&&jj_gen_partialMass<{maxMVV})".format(minMVV=700,maxMVV=7000)
 
-
-
-
 def makeSignalShapesMVV(filename,template):
 
  cut='*'.join([cuts['common'],cuts['acceptanceMJJ']])
@@ -80,20 +77,19 @@ def makeSignalYields(filename,template,branchingFraction,sfP = {'HP':1.0,'LP':1.
   os.system(cmd)
 
 def makeDetectorResponse(name,filename,template,addCut="1"):
-	#first parameterize detector response
-	for p in purities:
-		print "=========== PURITY: ", p
-		cut='*'.join([cuts['common'],cuts[p],'(jj_l1_gen_softDrop_mass>10&&jj_gen_partialMass>0)',addCut])
-		resFile=filename+"_"+name+"_detectorResponse_"+p+".root"	       
-		cmd='vvMake2DDetectorParam.py  -o "{rootFile}" -s "{samples}" -c "{cut}"  -v "jj_LV_mass,jj_l1_softDrop_mass"  -g "jj_gen_partialMass,jj_l1_gen_softDrop_mass,jj_l1_gen_pt"  -b "150,200,250,300,350,400,450,500,600,700,800,900,1000,1500,2000,5000"   samples'.format(rootFile=resFile,samples=template,cut=cut,binsMVV=binsMVV,minMVV=minMVV,maxMVV=maxMVV,tag=name)
-		os.system(cmd)
- 
+ #first parameterize detector response
+ for p in purities:
+  print "=========== PURITY: ", p
+  cut='*'.join([cuts['common'],cuts[p],'(jj_l1_gen_softDrop_mass>10&&jj_gen_partialMass>0)',addCut])
+  resFile=filename+"_"+name+"_detectorResponse_"+p+".root"		 
+  cmd='vvMake2DDetectorParam.py  -o "{rootFile}" -s "{samples}" -c "{cut}"  -v "jj_LV_mass,jj_l1_softDrop_mass"  -g "jj_gen_partialMass,jj_l1_gen_softDrop_mass,jj_l1_gen_pt"  -b "150,200,250,300,350,400,450,500,600,700,800,900,1000,1500,2000,5000"   samples'.format(rootFile=resFile,samples=template,cut=cut,binsMVV=binsMVV,minMVV=minMVV,maxMVV=maxMVV,tag=name)
+  os.system(cmd)
+		 
 def makeBackgroundShapesMJJ(name,filename,template,addCut="1"):
  
  template += ",QCD_HT,QCD_Pt-"
  for p in purities:
   resFile=filename+"_"+name+"_detectorResponse_"+p+".root"	
-
   print "=========== PURITY: ", p
   cut='*'.join([cuts['common'],cuts[p],addCut,cuts['acceptanceGENMJJ']])
   rootFile=filename+"_"+name+"_MJJ_"+p+"_test.root"  	      
@@ -105,7 +101,6 @@ def makeBackgroundShapesMVVConditional(name,filename,template,addCut=""):
  template += ",QCD_HT,QCD_Pt-"
  for p in purities:
   resFile=filename+"_"+name+"_detectorResponse_"+p+".root"	
-
   print "=========== PURITY: ", p
   cut='*'.join([cuts['common'],cuts[p],addCut,cuts['acceptanceGEN']])
   rootFile=filename+"_"+name+"_COND2D_"+p+".root"		 
