@@ -199,56 +199,65 @@ def doKernel(f):
 	# c.SaveAs("/eos/user/t/thaarres/www/vvana/DetectorResolution/CORR_kernelVSsim_HPandLP.png")
 
 def do2DKernel(f):
-	fromKernel 		= f.Get("histo")
-	fromKernelalt1 	= f.Get("histo_altshape1")
-	fromKernelalt2 	= f.Get("histo_altshape2up")
-	fromSim    		= f.Get("mjet_mvv")
+	colors= [1,418,434,802,618,1,7,8,9,40,41,42,43]
+	
+	fromKernel 			= f.Get("histo")
+	fromKernelalt1 		= f.Get("histo_altshape1")
+	fromKernelalt2up 	= f.Get("histo_altshape2up")
+	fromKernelalt2down 	= f.Get("histo_altshape2down")
+	fromSim    			= f.Get("mjet_mvv")
 	
 	 #X==JetMass Y==MVV
-	
-	
+
+
 	histsAllY = []
 	hAllYfromKernel 		= fromKernel    .ProjectionY()
 	hAllYfromKernelalt1 	= fromKernelalt1.ProjectionY()
-	hAllYfromKernelalt2 	= fromKernelalt2.ProjectionY()
+	hAllYfromKernelalt2up 	= fromKernelalt2up.ProjectionY()
+	hAllYfromKernelalt2down	= fromKernelalt2down.ProjectionY()
 	hAllYfromSim 		    = fromSim       .ProjectionY()
 	histsAllY.append(hAllYfromSim 	)
 	histsAllY.append(hAllYfromKernel 	)
 	histsAllY.append(hAllYfromKernelalt1 )
-	histsAllY.append(hAllYfromKernelalt2 )
+	histsAllY.append(hAllYfromKernelalt2up )
+	histsAllY.append(hAllYfromKernelalt2down )
 	c = getCanvas()
-	l = getLegend()
-	l.AddEntry(hAllYfromSim       ,"MC events (Pythia8)","LEP")
-	l.AddEntry(hAllYfromKernel    ,"Nominal (Pythia8)","L")
-	l.AddEntry(hAllYfromKernelalt1,"Madgraph+Pythia8" ,"L")
-	l.AddEntry(hAllYfromKernelalt2,"Herwig++"		 ,"L")
-	colors= [1,418,434,802,618,1,7,8,9,40,41,42,43]
 	for col,h in enumerate (histsAllY):
 		beautify(h,colors[col])
+		h.Rebin(2)
 		# h.GetXaxis().SetRangeUser(0.,610.)
 		h.GetXaxis().SetTitle("Mass (GeV)")
 		h.GetYaxis().SetTitle("A.U")
 		if h.GetName().find("sim")!=-1: h.DrawNormalized("Esame")
 		else: h.DrawNormalized("HISTsame")
+	l = getLegend()
+	l.AddEntry(hAllYfromSim       		,"MC events (Pythia8)","LEP")
+	l.AddEntry(hAllYfromKernel    		,"Nominal (Pythia8)","L")
+	l.AddEntry(hAllYfromKernelalt1		,"Madgraph+Pythia8" ,"L")
+	l.AddEntry(hAllYfromKernelalt2up	,"Herwig++ up"		 ,"L")
+	l.AddEntry(hAllYfromKernelalt2down	,"Herwig++ down"		 ,"L")
 	l.Draw("same")
 	c.SaveAs("/eos/user/t/thaarres/www/vvana/2Dkernel/projY_mass_allmvvbins.png")
-	
+
 	histsAllX = []
 	hAllXfromKernel 		= fromKernel    .ProjectionX()
 	hAllXfromKernelalt1 	= fromKernelalt1.ProjectionX()
-	hAllXfromKernelalt2 	= fromKernelalt2.ProjectionX()
-	hAllXfromSim 		    = fromSim       .ProjectionX()
+	hAllXfromKernelalt2up 	= fromKernelalt2up	.ProjectionX()
+	hAllXfromKernelalt2down	= fromKernelalt2down.ProjectionX()
+	hAllXfromSim 		    = fromSim       	.ProjectionX()
 	histsAllX.append(hAllXfromSim 	)
 	histsAllX.append(hAllXfromKernel 	)
 	histsAllX.append(hAllXfromKernelalt1 )
-	histsAllX.append(hAllXfromKernelalt2 )
+	histsAllX.append(hAllXfromKernelalt2up )
+	histsAllX.append(hAllXfromKernelalt2down )
 	c = getCanvas()
 	l = getLegend()
 	l.AddEntry(hAllXfromSim       ,"MC events (Pythia8)","LEP")
 	l.AddEntry(hAllXfromKernel    ,"Nominal (Pythia8)","L")
 	l.AddEntry(hAllXfromKernelalt1,"Madgraph+Pythia8" ,"L")
-	l.AddEntry(hAllXfromKernelalt2,"Herwig++"		 ,"L")
-	colors= [1,418,434,802,618,1,7,8,9,40,41,42,43]
+	l.AddEntry(hAllXfromKernelalt2up,"Herwig++ up"		 ,"L")
+	l.AddEntry(hAllXfromKernelalt2down,"Herwig++ down"		 ,"L")
+
 	for col,h in enumerate (histsAllX):
 		beautify(h,colors[col])
 		# h.GetXaxis().SetRangeUser(1000.,7000.)
@@ -261,59 +270,62 @@ def do2DKernel(f):
 
 	for bin in range(1,fromKernel.GetNbinsX()):
 		hists = []
-		hfromKernel 	= fromKernel.ProjectionY("bin%i"%bin,bin,bin)
-		hfromKernelalt1 = fromKernelalt1.ProjectionY("alt1_bin%i"%bin,bin,bin)
-		hfromKernelalt2 = fromKernelalt2.ProjectionY("alt2_bin%i"%bin,bin,bin)
-		hfromSim 		= fromSim.ProjectionY("sim_bin%i"%bin,bin,bin)
+		hfromKernel 		= fromKernel.ProjectionY("bin%i"%bin,bin,bin)
+		hfromKernelalt1 	= fromKernelalt1.ProjectionY("alt1_bin%i"%bin,bin,bin)
+		hfromKernelalt2up 	= fromKernelalt2up.ProjectionY("alt2up_bin%i"%bin,bin,bin)
+		hfromKernelalt2down = fromKernelalt2down.ProjectionY("alt2down_bin%i"%bin,bin,bin)
+		hfromSim 			= fromSim.ProjectionY("sim_bin%i"%bin,bin,bin)
 		hists.append(hfromSim 	)
 		hists.append(hfromKernel 	)
 		hists.append(hfromKernelalt1 )
-		hists.append(hfromKernelalt2 )
+		hists.append(hfromKernelalt2up )
+		hists.append(hfromKernelalt2down )
 		c = getCanvas()
 		l = getLegend()
 		l.AddEntry(hfromSim       ,"MC events (Pythia8)","LEP")
 		l.AddEntry(hfromKernel    ,"Nominal (Pythia8)","L")
 		l.AddEntry(hfromKernelalt1,"Madgraph+Pythia8" ,"L")
-		l.AddEntry(hfromKernelalt2,"Herwig++"		 ,"L")
-		# l.AddEntry(hfromSim	     ,"From Simulation " ,"L")
-		colors= [1,418,434,802,618,1,7,8,9,40,41,42,43]
+		l.AddEntry(hfromKernelalt2up,"Herwig++ up"		 ,"L")
+		l.AddEntry(hfromKernelalt2down,"Herwig++ down"		 ,"L")
+
 		for col,h in enumerate (hists):
 			beautify(h,colors[col])
-			h.GetXaxis().SetRangeUser(0.,610.)
+			# h.GetXaxis().SetRangeUser(0.,610.)
 			h.GetXaxis().SetTitle("Mass (GeV)")
 			h.GetYaxis().SetTitle("A.U")
 			if h.GetName().find("sim")!=-1: h.DrawNormalized("Esame")
 			else: h.DrawNormalized("HISTsame")
 		l.Draw("same")
-		c.SaveAs("/eos/user/t/thaarres/www/vvana/2Dkernel/projX_mass_mvvbin%i.png"%bin)
+		c.SaveAs("/eos/user/t/thaarres/www/vvana/2Dkernel/projY_perBin/projY_mass_mvvbin%i.png"%bin)
 
 	for bin in range(2,fromKernel.GetNbinsY()):
 		hists = []
-		hfromKernel 	= fromKernel.ProjectionX("bin%i"%bin,bin,bin)
-		hfromKernelalt1 = fromKernelalt1.ProjectionX("alt1_bin%i"%bin,bin,bin)
-		hfromKernelalt2 = fromKernelalt2.ProjectionX("alt2_bin%i"%bin,bin,bin)
+		hfromKernel 		= fromKernel.ProjectionX("bin%i"%bin,bin,bin)
+		hfromKernelalt1 	= fromKernelalt1.ProjectionX("alt1_bin%i"%bin,bin,bin)
+		hfromKernelalt2up 	= fromKernelalt2up.ProjectionX("alt2up_bin%i"%bin,bin,bin)
+		hfromKernelalt2down = fromKernelalt2down.ProjectionX("alt2down_bin%i"%bin,bin,bin)
 		hfromSim 		= fromSim.ProjectionX("sim_bin%i"%bin,bin,bin)
 		hists.append(hfromSim 	)
 		hists.append(hfromKernel 	)
 		hists.append(hfromKernelalt1 )
-		hists.append(hfromKernelalt2 )
+		hists.append(hfromKernelalt2up )
+		hists.append(hfromKernelalt2down )
 		c = getCanvas()
 		l = getLegend()
 		l.AddEntry(hfromSim       ,"MC events (Pythia8)","LEP")
 		l.AddEntry(hfromKernel    ,"Nominal (Pythia8)","L")
 		l.AddEntry(hfromKernelalt1,"Madgraph+Pythia8" ,"L")
-		l.AddEntry(hfromKernelalt2,"Herwig++"		 ,"L")
-		# l.AddEntry(hfromSim	     ,"From Simulation " ,"L")
-		colors= [1,418,434,802,618,1,7,8,9,40,41,42,43]
+		l.AddEntry(hfromKernelalt2up,"Herwig++ up"		 ,"L")
+		l.AddEntry(hfromKernelalt2down,"Herwig++ down"		 ,"L")
 		for col,h in enumerate (hists):
 			beautify(h,colors[col])
-			h.GetXaxis().SetRangeUser(1000.,7000.)
+			# h.GetXaxis().SetRangeUser(1000.,7000.)
 			h.GetXaxis().SetTitle("M_{jj}(GeV)")
 			h.GetYaxis().SetTitle("A.U")
 			if h.GetName().find("sim")!=-1: h.DrawNormalized("Esame")
 			else: h.DrawNormalized("HISTsame")
 		l.Draw("same")
-		c.SaveAs("/eos/user/t/thaarres/www/vvana/2Dkernel/projY_mvv_massbin%i.png"%bin)
+		c.SaveAs("/eos/user/t/thaarres/www/vvana/2Dkernel/projX_perBin/projX_mvv_massbin%i.png"%bin)
 
 
 # doResolution()
