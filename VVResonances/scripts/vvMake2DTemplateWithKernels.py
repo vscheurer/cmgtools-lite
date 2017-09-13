@@ -136,7 +136,8 @@ binsx=[]
 for i in range(0,options.binsx+1):
     binsx.append(options.minx+i*(options.maxx-options.minx)/options.binsx)
 binsy=[30.,40.,50.,60.,70.,80.,90.,100.,110.,120.,140.,150.,160.,180.,210., 240., 270., 300., 330., 360., 390., 410., 440., 470., 500., 530., 560., 590.,610.]    #28
-ptBins=[0,150,200,250,300,350,400,450,500,550,600,700,800,900,1000,1500,2000,5000]
+# ptBins=[0,150,200,250,300,350,400,450,500,550,600,700,800,900,1000,1500,2000,5000]
+massBins=[30,35,40,45,50,80,100,120,150,200,250,350,500,600,800]
 
 
 
@@ -149,7 +150,7 @@ histogram_altshape2		=	ROOT.TH2F("histo_altshape2up"	,"histo"	,len(binsx)-1,arra
 
 #systematics
 histograms=[
-    histogram,
+    histogram
     histogram_altshape1,
     histogram_altshape2
 ]
@@ -161,7 +162,7 @@ maxEvents = -1
 varsDataSet = 'jj_l1_gen_pt,'+variables[1]+','+variables[0]
 
 for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
-	# if plotter.filename.find("QCD_Pt-") ==-1 and plotter.filename.find("QCD_Pt_1000") ==-1 and plotter.filename.find("QCD_HT1000") ==-1 :continue
+	# if plotter.filename.find("QCD_Pt_") ==-1 :continue
 	#Nominal histogram
 	if plotter.filename.find(sampleTypes[0]) != -1:
 		print "Preparing nominal histogram for sampletype " ,sampleTypes[0]
@@ -178,7 +179,7 @@ for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
 		dataset=plotterNW.makeDataSet(varsDataSet,options.cut,maxEvents)
 
 		print " - Creating gaussian template - "
-		datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'jj_l1_gen_pt',scale_x,scale_y,res_x,res_y,histTMP)
+		datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'jj_l1_gen_softDrop_mass',scale_x,scale_y,res_x,res_y,histTMP)
 
 		if histTMP.Integral()>0:
 			histTMP.Scale(histI.Integral()/histTMP.Integral())
@@ -204,7 +205,7 @@ for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
 		dataset=plotterNW.makeDataSet(varsDataSet,options.cut,maxEvents)
 
 		print " - Creating gaussian template - "
-		datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'jj_l1_gen_pt',scale_x,scale_y,res_x,res_y,histTMP)
+		datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'jj_l1_gen_softDrop_mass',scale_x,scale_y,res_x,res_y,histTMP)
 
 		if histTMP.Integral()>0:
 			histTMP.Scale(histI.Integral()/histTMP.Integral())
@@ -226,7 +227,7 @@ for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
 		dataset=plotterNW.makeDataSet(varsDataSet,options.cut,maxEvents)
 
 		print " - Creating gaussian template - "
-		datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'jj_l1_gen_pt',scale_x,scale_y,res_x,res_y,histTMP)
+		datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'jj_l1_gen_softDrop_mass',scale_x,scale_y,res_x,res_y,histTMP)
 
 		if histTMP.Integral()>0:
 			histTMP.Scale(histI.Integral()/histTMP.Integral())
@@ -257,10 +258,10 @@ expanded=expandHisto(mjet_mvv,options)
 conditional(expanded)
 mjet_mvv.Write()
 
-##Mirror Herwig shape
-histogram_altshape2down=mirror(finalHistograms['histo_altshape2up'],finalHistograms['histo'],"histo_altshape2down")
-conditional(histogram_altshape2down)
-histogram_altshape2down.Write()
+# ##Mirror Herwig shape
+# histogram_altshape2down=mirror(finalHistograms['histo_altshape2up'],finalHistograms['histo'],"histo_altshape2down")
+# conditional(histogram_altshape2down)
+# histogram_altshape2down.Write()
 
 
 # plotname = "debug_massBin%i_"%i+hist.GetName()+options.output.replace(".root",".png")
