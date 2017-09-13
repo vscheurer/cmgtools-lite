@@ -127,7 +127,7 @@ histogram_altshape2.Sumw2()
 
 histograms=[
     histogram,
-    histogram_altshape1,
+    # histogram_altshape1,
     histogram_altshape2,
     mjet
 	]
