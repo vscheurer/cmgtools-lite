@@ -96,7 +96,7 @@ def makeBackgroundShapesMJJ(name,filename,template,addCut="1"):
 
   print "=========== PURITY: ", p
   cut='*'.join([cuts['common'],cuts[p],addCut,cuts['acceptanceGENMJJ']])
-  rootFile=filename+"_"+name+"_MJJ_"+p+"_test.root"  	      
+  rootFile=filename+"_"+name+"_MJJ_"+p+".root"  	      
   cmd='vvMake1DTemplateWithKernels.py -H "y" -o "{rootFile}" -s "{samples}" -c "{cut}"  -v "jj_l1_gen_softDrop_mass" -b {binsMJJ}  -x {minMJJ} -X {maxMJJ} -r {res} samples'.format(rootFile=rootFile,samples=template,cut=cut,res=resFile,binsMJJ=binsMJJ,minMJJ=minMJJ,maxMJJ=maxMJJ)
   os.system(cmd)
 
@@ -118,7 +118,7 @@ def mergeBackgroundShapes(name,filename):
   inputy=filename+"_"+name+"_MJJ_"+p+".root"	    
   inputx=filename+"_"+name+"_COND2D_"+p+".root"	       
   rootFile=filename+"_"+name+"_2D_"+p+".root"	     
-  cmd='vvMergeHistosToPDF2D.py -i "{inputx}" -I "{inputy}" -o "{rootFile}" -s "Scale:ScaleX,PT:PTX,OPT:OPTX,PT2:PTX2,Res:ResX,TOP:TOPX" -S "Scale:ScaleY,PT:PTY,TOP:TOPY,OPT:OPTY,Res:ResY" -C "PT:PTBoth" '.format(rootFile=rootFile,inputx=inputx,inputy=inputy)
+  cmd='vvMergeHistosToPDF2D.py -i "{inputx}" -I "{inputy}" -o "{rootFile}" -s "altshape1:altshape1X,altshape2:altshape2X" -S "altshape:altshapeY" -C "" '.format(rootFile=rootFile,inputx=inputx,inputy=inputy)
   os.system(cmd)
 
 def makeNormalizations(name,filename,template,data=0,addCut='1',factor=1):
