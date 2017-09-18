@@ -24,6 +24,7 @@ parser.add_option("-X","--maxx",dest="maxx",type=float,help="conditional bins sp
 parser.add_option("-y","--miny",dest="miny",type=float,help="bins",default=0)
 parser.add_option("-Y","--maxy",dest="maxy",type=float,help="conditional bins split by comma",default=1)
 parser.add_option("-w","--weights",dest="weights",help="additional weights",default='')
+parser.add_option("-u","--usegenmass",dest="usegenmass",action="store_true",help="use gen mass for det resolution",default=False)
 
 
 def mirror(histo,histoNominal,name):
@@ -97,31 +98,29 @@ dataPlotters=[]
 dataPlottersNW=[]
 
 for filename in os.listdir(args[0]):
-    for sampleType in sampleTypes:
-        if filename.find(sampleType)!=-1:
-            fnameParts=filename.split('.')
-            fname=fnameParts[0]
-            ext=fnameParts[1]
-            if ext.find("root") ==-1:
-                continue
-            dataPlotters.append(TreePlotter(args[0]+'/'+fname+'.root','tree'))
-            dataPlotters[-1].setupFromFile(args[0]+'/'+fname+'.pck')
-            dataPlotters[-1].addCorrectionFactor('xsec','tree')
-            dataPlotters[-1].addCorrectionFactor('genWeight','tree')
-            dataPlotters[-1].addCorrectionFactor('puWeight','tree')
-            for w in weights_:
-							if w != '': dataPlotters[-1].addCorrectionFactor(w,'branch')
-            dataPlotters[-1].filename=fname
-            dataPlottersNW.append(TreePlotter(args[0]+'/'+fname+'.root','tree'))
-            dataPlottersNW[-1].addCorrectionFactor('puWeight','tree')
-            dataPlottersNW[-1].addCorrectionFactor('genWeight','tree')
-            for w in weights_: 
-             if w != '': dataPlottersNW[-1].addCorrectionFactor(w,'branch')
-            dataPlottersNW[-1].filename=fname
-
+ for sampleType in sampleTypes:
+  if filename.find(sampleType)!=-1:
+   fnameParts=filename.split('.')
+   fname=fnameParts[0]
+   ext=fnameParts[1]
+   if ext.find("root") ==-1:
+       continue
+   dataPlotters.append(TreePlotter(args[0]+'/'+fname+'.root','tree'))
+   dataPlotters[-1].setupFromFile(args[0]+'/'+fname+'.pck')
+   dataPlotters[-1].addCorrectionFactor('xsec','tree')
+   dataPlotters[-1].addCorrectionFactor('genWeight','tree')
+   dataPlotters[-1].addCorrectionFactor('puWeight','tree')
+   for w in weights_:
+    if w != '': dataPlotters[-1].addCorrectionFactor(w,'branch')
+   dataPlotters[-1].filename=fname
+   dataPlottersNW.append(TreePlotter(args[0]+'/'+fname+'.root','tree'))
+   dataPlottersNW[-1].addCorrectionFactor('puWeight','tree')
+   dataPlottersNW[-1].addCorrectionFactor('genWeight','tree')
+   for w in weights_: 
+    if w != '': dataPlottersNW[-1].addCorrectionFactor(w,'branch')
+   dataPlottersNW[-1].filename=fname
 
 data=MergedPlotter(dataPlotters)
-
 
 fcorr=ROOT.TFile(options.res)
 scale_x=fcorr.Get("scalexHisto")
@@ -131,30 +130,25 @@ res_y=fcorr.Get("resyHisto")
 
 variables=options.vars.split(',')
 
-
 binsx=[]
 for i in range(0,options.binsx+1):
     binsx.append(options.minx+i*(options.maxx-options.minx)/options.binsx)
+
 binsy=[30.,40.,50.,60.,70.,80.,90.,100.,110.,120.,140.,150.,160.,180.,210., 240., 270., 300., 330., 360., 390., 410., 440., 470., 500., 530., 560., 590.,610.]    #28
-# ptBins=[0,150,200,250,300,350,400,450,500,550,600,700,800,900,1000,1500,2000,5000]
-massBins=[30,35,40,45,50,80,100,120,150,200,250,350,500,600,800]
 
-
-
-
-mjet_mvv				=	ROOT.TH2F("mjet_mvv"			,"mjet_mvv" ,options.binsx,options.minx,options.maxx,options.binsy,options.miny,options.maxy)
-histogram				=	ROOT.TH2F("histo"				,"histo"	,len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
-histogram_altshape1		=	ROOT.TH2F("histo_altshape1"		,"histo"	,len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
-histogram_altshape2		=	ROOT.TH2F("histo_altshape2up"	,"histo"	,len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
-
+mjet_mvv_nominal = ROOT.TH2F("mjet_mvv_nominal","mjet_mvv_nominal",options.binsx,options.minx,options.maxx,options.binsy,options.miny,options.maxy)
+mjet_mvv_altshapeUp = ROOT.TH2F("mjet_mvv_altshapeUp","mjet_mvv_altshapeUp",options.binsx,options.minx,options.maxx,options.binsy,options.miny,options.maxy)
+mjet_mvv_altshape2 = ROOT.TH2F("mjet_mvv_altshape2","mjet_mvv_altshape2",options.binsx,options.minx,options.maxx,options.binsy,options.miny,options.maxy)
+histogram = ROOT.TH2F("histo_nominal","histo_nominal",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+histogram_altshapeUp = ROOT.TH2F("histo_altshapeUp","histo_altshapeUp",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+histogram_altshape2 = ROOT.TH2F("histo_altshape2","histo_altshape2",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
 
 #systematics
 histograms=[
-    histogram
-    histogram_altshape1,
+    histogram,
+    histogram_altshapeUp,
     histogram_altshape2
 ]
-
 
 #ok lets populate!
 
@@ -162,116 +156,117 @@ maxEvents = -1
 varsDataSet = 'jj_l1_gen_pt,'+variables[1]+','+variables[0]
 
 for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
-	# if plotter.filename.find("QCD_Pt_") ==-1 :continue
-	#Nominal histogram
-	if plotter.filename.find(sampleTypes[0]) != -1:
-		print "Preparing nominal histogram for sampletype " ,sampleTypes[0]
-		print "filename: ", plotter.filename, " preparing central values histo"
-		
-		histI=plotter.drawTH1(variables[0],options.cut,"1",1,0,1000000000)
-		norm=histI.Integral()
-		#y:x
-		histI2D=plotter.drawTH2("jj_l1_softDrop_mass:jj_LV_mass",options.cut,"1",options.binsx,options.minx,options.maxx,options.binsy,options.miny,options.maxy,"M_{qV} mass","GeV","Softdrop mass","GeV","COLZ" )
-		histTMP=ROOT.TH2F("histoTMP","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
 
+ #if plotter.filename != 'QCD_Pt-15to7000': continue
+ 
+ #Nominal histogram Pythia8
+ if plotter.filename.find(sampleTypes[0]) != -1:
+  print "Preparing nominal histogram for sampletype " ,sampleTypes[0]
+  print "filename: ", plotter.filename, " preparing central values histo"
+ 
+  histI=plotter.drawTH1(variables[0],options.cut,"1",1,0,1000000000)
+  norm=histI.Integral()
+  #y:x
+  histI2D=plotter.drawTH2("jj_l1_softDrop_mass:jj_LV_mass",options.cut,"1",options.binsx,options.minx,options.maxx,options.binsy,options.miny,options.maxy,"M_{qV} mass","GeV","Softdrop mass","GeV","COLZ" )
+  histTMP=ROOT.TH2F("histoTMP","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
 
-		print " - Creating dataset - "
-		dataset=plotterNW.makeDataSet(varsDataSet,options.cut,maxEvents)
+  print " - Creating dataset - "
+  dataset=plotterNW.makeDataSet(varsDataSet,options.cut,maxEvents)
 
-		print " - Creating gaussian template - "
-		datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'jj_l1_gen_softDrop_mass',scale_x,scale_y,res_x,res_y,histTMP)
+  print " - Creating gaussian template - "
+  if not(options.usegenmass): 
+   datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'jj_l1_gen_pt',scale_x,scale_y,res_x,res_y,histTMP)
+  else: datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'jj_l1_gen_softDrop_mass',scale_x,scale_y,res_x,res_y,histTMP)
 
-		if histTMP.Integral()>0:
-			histTMP.Scale(histI.Integral()/histTMP.Integral())
-			histogram.Add(histTMP)
-		if histI2D.Integral()>0:
-			histI2D.Scale(histI.Integral()/histI2D.Integral())
-			mjet_mvv.Add(histI2D)
-		
-		histI2D.Delete()	
-		histTMP.Delete()
+  if histTMP.Integral()>0:
+   histTMP.Scale(histI.Integral()/histTMP.Integral())
+   histogram.Add(histTMP)
+   mjet_mvv_nominal.Add(histI2D)
+ 
+  histI2D.Delete()	  
+  histTMP.Delete()
 
-	#Alternative shape 1 (e.g Madgraph+Pythia8)
-	elif plotter.filename.find(sampleTypes[1]) != -1:
-		print "Preparing alternative shapes for sampletype " ,sampleTypes[1]
-		print "filename: ", plotter.filename, " preparing alternate shape histo"
+ if len(sampleTypes)<2: continue 
+ elif plotter.filename.find(sampleTypes[1]) != -1: #alternative shape Herwig
+  print "Preparing alternative shapes for sampletype " ,sampleTypes[2]
+  print "filename: ", plotter.filename, " preparing alternate shape histo"
 
-		histI=plotter.drawTH1(variables[0],options.cut,"1",1,0,1000000000)
-		norm=histI.Integral()
+  histI=plotter.drawTH1(variables[0],options.cut,"1",1,0,1000000000)
+  norm=histI.Integral()
 
-		histTMP=ROOT.TH2F("histoTMP","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+  histI2D=plotter.drawTH2("jj_l1_softDrop_mass:jj_LV_mass",options.cut,"1",options.binsx,options.minx,options.maxx,options.binsy,options.miny,options.maxy,"M_{qV} mass","GeV","Softdrop mass","GeV","COLZ" )
+  histTMP=ROOT.TH2F("histoTMP","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
 
-		print " - Creating dataset - "
-		dataset=plotterNW.makeDataSet(varsDataSet,options.cut,maxEvents)
+  print " - Creating dataset - "
+  dataset=plotterNW.makeDataSet(varsDataSet,options.cut,maxEvents)
 
-		print " - Creating gaussian template - "
-		datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'jj_l1_gen_softDrop_mass',scale_x,scale_y,res_x,res_y,histTMP)
+  print " - Creating gaussian template - "
+  if not(options.usegenmass): 
+   datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'jj_l1_gen_pt',scale_x,scale_y,res_x,res_y,histTMP)
+  else: datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'jj_l1_gen_softDrop_mass',scale_x,scale_y,res_x,res_y,histTMP)
 
-		if histTMP.Integral()>0:
-			histTMP.Scale(histI.Integral()/histTMP.Integral())
-			histogram_altshape1.Add(histTMP)
+  if histTMP.Integral()>0:
+    histTMP.Scale(histI.Integral()/histTMP.Integral())
+    histogram_altshapeUp.Add(histTMP)
+    mjet_mvv_altshapeUp.Add(histI2D)
 
-		histTMP.Delete()
+  histI2D.Delete()
+  histTMP.Delete()
 
-	#Alternative shape 2 (e.g Herwig)
-	elif plotter.filename.find(sampleTypes[2]) != -1:
-		print "Preparing alternative shapes for sampletype " ,sampleTypes[2]
-		print "filename: ", plotter.filename, " preparing alternate shape histo"
+ if len(sampleTypes)<3: continue 
+ elif plotter.filename.find(sampleTypes[2]) != -1: #alternative shape Pythia8+Madgraph (not used for syst but only for cross checks)
+  print "Preparing alternative shapes for sampletype " ,sampleTypes[2]
+  print "filename: ", plotter.filename, " preparing alternate shape histo"
 
-		histI=plotter.drawTH1(variables[0],options.cut,"1",1,0,1000000000)
-		norm=histI.Integral()
+  histI=plotter.drawTH1(variables[0],options.cut,"1",1,0,1000000000)
+  norm=histI.Integral()
 
-		histTMP=ROOT.TH2F("histoTMP","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
+  histI2D=plotter.drawTH2("jj_l1_softDrop_mass:jj_LV_mass",options.cut,"1",options.binsx,options.minx,options.maxx,options.binsy,options.miny,options.maxy,"M_{qV} mass","GeV","Softdrop mass","GeV","COLZ" )
+  histTMP=ROOT.TH2F("histoTMP","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
 
-		print " - Creating dataset - "
-		dataset=plotterNW.makeDataSet(varsDataSet,options.cut,maxEvents)
+  print " - Creating dataset - "
+  dataset=plotterNW.makeDataSet(varsDataSet,options.cut,maxEvents)
 
-		print " - Creating gaussian template - "
-		datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'jj_l1_gen_softDrop_mass',scale_x,scale_y,res_x,res_y,histTMP)
+  print " - Creating gaussian template - "
+  if not(options.usegenmass): 
+   datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'jj_l1_gen_pt',scale_x,scale_y,res_x,res_y,histTMP)
+  else: datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'jj_l1_gen_softDrop_mass',scale_x,scale_y,res_x,res_y,histTMP)
 
-		if histTMP.Integral()>0:
-			histTMP.Scale(histI.Integral()/histTMP.Integral())
-			histogram_altshape2.Add(histTMP)
+  if histTMP.Integral()>0:
+    histTMP.Scale(histI.Integral()/histTMP.Integral())
+    histogram_altshape2.Add(histTMP)
+    mjet_mvv_altshape2.Add(histI2D)
 
-		histTMP.Delete()
+  histI2D.Delete()
+  histTMP.Delete()
 
 f=ROOT.TFile(options.output,"RECREATE")
 print "Finished producing histograms! Saving to" ,options.output
 finalHistograms={}
 f.cd()
 for hist in histograms:
-	print "Working on histogram " ,hist.GetName()
-	hist.Write(hist.GetName()+"_coarse")
-	#smooth
-	print "Smoothing tail for " ,hist.GetName()
-	smoothTail(hist)
-	print "Creating conditional histogram for ",hist.GetName()
-	conditional(hist)
-	print "Expanding for " ,hist.GetName()
-	expanded=expandHisto(hist,options)
-	conditional(expanded)
-	expanded.Write()
-	finalHistograms[hist.GetName()]=expanded
+ print "Working on histogram " ,hist.GetName()
+ hist.Write(hist.GetName()+"_coarse")
+ #smooth
+ #print "Smoothing tail for " ,hist.GetName()
+ #smoothTail(hist)
+ print "Creating conditional histogram for ",hist.GetName()
+ conditional(hist)
+ print "Expanding for " ,hist.GetName()
+ expanded=expandHisto(hist,options)
+ conditional(expanded)
+ expanded.Write()
+ finalHistograms[hist.GetName()]=expanded
 
-conditional(mjet_mvv)
-expanded=expandHisto(mjet_mvv,options)
-conditional(expanded)
-mjet_mvv.Write()
+mjet_mvv_nominal.Write()
+mjet_mvv_altshapeUp.Write()
+mjet_mvv_altshape2.Write()
 
 # ##Mirror Herwig shape
-# histogram_altshape2down=mirror(finalHistograms['histo_altshape2up'],finalHistograms['histo'],"histo_altshape2down")
-# conditional(histogram_altshape2down)
-# histogram_altshape2down.Write()
-
-
-# plotname = "debug_massBin%i_"%i+hist.GetName()+options.output.replace(".root",".png")
-# print "Drawing debugging plot ", plotname
-# canv = ROOT.TCanvas("c1","c1",800,600)
-# canv.cd()
-# hist.DrawNormalized("HISTsame")
-# canv.SaveAs(plotname )
-        
-		
+histogram_altshapeDown=mirror(finalHistograms['histo_altshapeUp'],finalHistograms['histo_nominal'],"histo_altshapeDown")
+conditional(histogram_altshapeDown)
+histogram_altshapeDown.Write()
+        		
 f.Close()
 
 

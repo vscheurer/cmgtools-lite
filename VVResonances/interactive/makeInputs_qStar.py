@@ -30,12 +30,12 @@ binsMJJ=290
 binsMVV=160
 
 cuts['acceptance']= "(jj_LV_mass>{minMVV}&&jj_LV_mass<{maxMVV}&&jj_l1_softDrop_mass>{minMJJ}&&jj_l1_softDrop_mass<{maxMJJ})".format(minMVV=minMVV,maxMVV=maxMVV,minMJJ=minMJJ,maxMJJ=maxMJJ)
-cuts['acceptanceGEN']= "(jj_l1_gen_softDrop_mass>{minMJJ}&&jj_l1_gen_softDrop_mass<{maxMJJ}&&jj_gen_partialMass>{minMVV}&&jj_gen_partialMass<{maxMVV})".format(minMJJ=25,maxMJJ=700,minMVV=700,maxMVV=10000)                
+#cuts['acceptanceGEN']= "(jj_l1_gen_softDrop_mass>{minMJJ}&&jj_l1_gen_softDrop_mass<{maxMJJ}&&jj_gen_partialMass>{minMVV}&&jj_gen_partialMass<{maxMVV})".format(minMJJ=25,maxMJJ=700,minMVV=700,maxMVV=10000)                
+cuts['acceptanceGEN']='(jj_l1_gen_softDrop_mass>0&&jj_gen_partialMass>0)'
 
 cuts['acceptanceMJJ']= "(jj_l1_softDrop_mass>{minMJJ}&&jj_l1_softDrop_mass<{maxMJJ}) ".format(minMJJ=minMJJ,maxMJJ=maxMJJ) 
-cuts['acceptanceGENMJJ']= "(jj_l1_gen_softDrop_mass>{minMJJ}&&jj_l1_gen_softDrop_mass<{maxMJJ}&&jj_LV_mass>{minMVV}&&jj_LV_mass<{maxMVV})".format(minMJJ=minMJJ-5,maxMJJ=maxMJJ+5,minMVV=minMVV,maxMVV=maxMVV)
-
-cuts['acceptanceGENMVV']= "(jj_gen_partialMass>{minMVV}&&jj_gen_partialMass<{maxMVV})".format(minMVV=700,maxMVV=7000)
+#cuts['acceptanceGENMJJ']= "(jj_l1_gen_softDrop_mass>{minMJJ}&&jj_l1_gen_softDrop_mass<{maxMJJ}&&jj_LV_mass>{minMVV}&&jj_LV_mass<{maxMVV})".format(minMJJ=minMJJ-5,maxMJJ=maxMJJ+5,minMVV=minMVV,maxMVV=maxMVV)
+cuts['acceptanceGENMJJ']= '(jj_l1_gen_softDrop_mass>0&&jj_gen_partialMass>0)'
 
 def makeSignalShapesMVV(filename,template):
 
@@ -80,31 +80,45 @@ def makeDetectorResponse(name,filename,template,addCut="1"):
  #first parameterize detector response
  for p in purities:
   print "=========== PURITY: ", p
-  cut='*'.join([cuts['common'],cuts[p],'(jj_l1_gen_softDrop_mass>10&&jj_gen_partialMass>0)',addCut])
+  cut='*'.join([cuts['common'],cuts[p],'(jj_l1_gen_softDrop_mass>0&&jj_gen_partialMass>0)',addCut])
   resFile=filename+"_"+name+"_detectorResponse_"+p+".root"		 
   cmd='vvMake2DDetectorParam.py  -o "{rootFile}" -s "{samples}" -c "{cut}"  -v "jj_LV_mass,jj_l1_softDrop_mass"  -g "jj_gen_partialMass,jj_l1_gen_softDrop_mass,jj_l1_gen_pt"  -b "150,200,250,300,350,400,450,500,600,700,800,900,1000,1500,2000,5000"   samples'.format(rootFile=resFile,samples=template,cut=cut,binsMVV=binsMVV,minMVV=minMVV,maxMVV=maxMVV,tag=name)
+  #cmd='vvMake2DDetectorParam.py  -o "{rootFile}" -s "{samples}" -c "{cut}"  -v "jj_LV_mass,jj_l1_softDrop_mass"  -g "jj_gen_partialMass,jj_l1_gen_softDrop_mass,jj_l1_gen_softDrop_mass"  -b "30,35,40,45,50,80,100,120,150,200,250,350,500,600,800"   samples'.format(rootFile=resFile,samples=template,cut=cut,binsMVV=binsMVV,minMVV=minMVV,maxMVV=maxMVV,tag=name)
+
   os.system(cmd)
 		 
-def makeBackgroundShapesMJJ(name,filename,template,addCut="1"):
+def makeBackgroundShapesMJJKernel(name,filename,template,addCut="1"):
  
- template += ",QCD_HT,QCD_Pt-"
+ template += ",QCD_Pt-,QCD_HT"
  for p in purities:
   resFile=filename+"_"+name+"_detectorResponse_"+p+".root"	
   print "=========== PURITY: ", p
   cut='*'.join([cuts['common'],cuts[p],addCut,cuts['acceptanceGENMJJ']])
   rootFile=filename+"_"+name+"_MJJ_"+p+".root"  	      
   cmd='vvMake1DTemplateWithKernels.py -H "y" -o "{rootFile}" -s "{samples}" -c "{cut}"  -v "jj_l1_gen_softDrop_mass" -b {binsMJJ}  -x {minMJJ} -X {maxMJJ} -r {res} samples'.format(rootFile=rootFile,samples=template,cut=cut,res=resFile,binsMJJ=binsMJJ,minMJJ=minMJJ,maxMJJ=maxMJJ)
+  #cmd='vvMake1DTemplateWithKernels.py --usegenmass -H "y" -o "{rootFile}" -s "{samples}" -c "{cut}"  -v "jj_l1_gen_softDrop_mass" -b {binsMJJ}  -x {minMJJ} -X {maxMJJ} -r {res} samples'.format(rootFile=rootFile,samples=template,cut=cut,res=resFile,binsMJJ=binsMJJ,minMJJ=minMJJ,maxMJJ=maxMJJ)
   os.system(cmd)
 
+def makeBackgroundShapesMJJSpline(name,filename,template,addCut="1"):
+
+ template += ",QCD_Pt-,QCD_HT"
+ for p in purities:
+  print "=========== PURITY: ", p
+  cut='*'.join([cuts['common'],cuts[p],addCut,cuts['acceptance']])
+  rootFile=filename+"_"+name+"_MJJ_"+p+".root"	      
+  cmd='vvMake1DTemplateSpline.py  -o "{rootFile}" -s "{samples}" -c "{cut}"  -v "jj_l1_softDrop_mass"  -b {binsMJJ}  -x {minMJJ} -X {maxMJJ} -f 6 samples'.format(rootFile=rootFile,samples=template,cut=cut,binsMJJ=binsMJJ,minMJJ=minMJJ,maxMJJ=maxMJJ)
+  os.system(cmd)
+		
 def makeBackgroundShapesMVVConditional(name,filename,template,addCut=""):
 	
- template += ",QCD_HT,QCD_Pt-"
+ template += ",QCD_Pt-,QCD_HT"
  for p in purities:
   resFile=filename+"_"+name+"_detectorResponse_"+p+".root"	
   print "=========== PURITY: ", p
   cut='*'.join([cuts['common'],cuts[p],addCut,cuts['acceptanceGEN']])
   rootFile=filename+"_"+name+"_COND2D_"+p+".root"		 
   cmd='vvMake2DTemplateWithKernels.py  -o "{rootFile}" -s "{samples}" -c "{cut}"  -v "jj_gen_partialMass,jj_l1_gen_softDrop_mass"  -b {binsMVV} -B {binsMJJ} -x {minMVV} -X {maxMVV} -y {minMJJ} -Y {maxMJJ}  -r {res} samples'.format(rootFile=rootFile,samples=template,cut=cut,binsMVV=binsMVV,minMVV=minMVV,maxMVV=maxMVV,res=resFile,binsMJJ=binsMJJ,minMJJ=minMJJ,maxMJJ=maxMJJ)
+  #cmd='vvMake2DTemplateWithKernels.py --usegenmass -o "{rootFile}" -s "{samples}" -c "{cut}"  -v "jj_gen_partialMass,jj_l1_gen_softDrop_mass"  -b {binsMVV} -B {binsMJJ} -x {minMVV} -X {maxMVV} -y {minMJJ} -Y {maxMJJ}  -r {res} samples'.format(rootFile=rootFile,samples=template,cut=cut,binsMVV=binsMVV,minMVV=minMVV,maxMVV=maxMVV,res=resFile,binsMJJ=binsMJJ,minMJJ=minMJJ,maxMJJ=maxMJJ)
   os.system(cmd)
 
 def mergeBackgroundShapes(name,filename):
@@ -113,7 +127,7 @@ def mergeBackgroundShapes(name,filename):
   inputy=filename+"_"+name+"_MJJ_"+p+".root"	    
   inputx=filename+"_"+name+"_COND2D_"+p+".root"	       
   rootFile=filename+"_"+name+"_2D_"+p+".root"	     
-  cmd='vvMergeHistosToPDF2D.py -i "{inputx}" -I "{inputy}" -o "{rootFile}" -s "altshape1:altshape1X,altshape2:altshape2X" -S "altshape:altshapeY" -C "" '.format(rootFile=rootFile,inputx=inputx,inputy=inputy)
+  cmd='vvMergeHistosToPDF2D.py -i "{inputx}" -I "{inputy}" -o "{rootFile}" -s "altshape:altshapeX" -S "altshape:altshapeY" -C "" '.format(rootFile=rootFile,inputx=inputx,inputy=inputy)
   os.system(cmd)
 
 def makeNormalizations(name,filename,template,data=0,addCut='1',factor=1):
@@ -134,7 +148,8 @@ makeSignalShapesMJJ("JJ_XqZ",qZTemplate)
 makeSignalYields("JJ_XqZ",qZTemplate,BRqZ,{'HP':1.03,'LP':0.95})
 
 makeDetectorResponse("nonRes","JJ",nonResTemplate,cuts['nonres'])
-makeBackgroundShapesMJJ("nonRes","JJ",nonResTemplate,cuts['nonres'])
+makeBackgroundShapesMJJSpline("nonRes","JJ",nonResTemplate,cuts['nonres'])
+#makeBackgroundShapesMJJKernel("nonRes","JJ",nonResTemplate,cuts['nonres'])
 makeBackgroundShapesMVVConditional("nonRes","JJ",nonResTemplate,cuts['nonres'])
 mergeBackgroundShapes("nonRes","JJ")
 
