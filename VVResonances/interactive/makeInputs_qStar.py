@@ -41,14 +41,15 @@ cuts['acceptanceGENMVV']= "(jj_gen_partialMass>{minMVV}&&jj_gen_partialMass<{max
 
 
 def makeSignalShapesMVV(filename,template):
+ cuts['sigVV'] = '((HLT_JJ)*(run>500) + (run<500))*(njj>0&&Flag_goodVertices&&Flag_CSCTightHaloFilter&&Flag_HBHENoiseFilter&&Flag_HBHENoiseIsoFilter&&Flag_eeBadScFilter&&abs(jj_l1_eta-jj_l2_eta)<1.3&&jj_l1_softDrop_mass>0.)'
 
- cut='*'.join([cuts['common'],cuts['acceptanceMJJ']])
+ cut='*'.join([cuts['sigVV'],cuts['acceptanceMJJ']])
  rootFile=filename+"_MVV.root"
  cmd='vvMakeSignalMVVShapes.py -s "{template}" -c "{cut}"  -o "{rootFile}" -V "jj_LV_mass"  samples'.format(template=template,cut=cut,rootFile=rootFile,minMJJ=minMJJ,maxMJJ=maxMJJ)
  os.system(cmd)
  jsonFile=filename+"_MVV.json"
  print 'Making JSON'
- cmd='vvMakeJSON.py  -o "{jsonFile}" -g "MEAN:pol1,SIGMA:pol1,ALPHA:pol2,N:pol2,SCALESIGMA:pol2,f:pol2" -m 1000 -M 6000  {rootFile}  '.format(jsonFile=jsonFile,rootFile=rootFile)
+ cmd='vvMakeJSON.py  -o "{jsonFile}" -g "MEAN:pol1,SIGMA:pol2,ALPHA:pol3,N:pol0,SCALESIGMA:pol3,f:pol3" -m 1000 -M 6000  {rootFile}  '.format(jsonFile=jsonFile,rootFile=rootFile)
  os.system(cmd)
 
 def makeSignalShapesMJJ(filename,template):
@@ -104,11 +105,12 @@ def makeBackgroundShapesMVVConditional(name,filename,template,addCut=""):
 	
  template += ",QCD_HT,QCD_Pt-"
  for p in purities:
-  resFile=filename+"_"+name+"_detectorResponse_"+p+".root"	
+  resFile=filename+"_"+name+"_detectorResponse_"+p+"_mjet.root"	
 
   print "=========== PURITY: ", p
-  cut='*'.join([cuts['common'],cuts[p],addCut,cuts['acceptanceGEN']])
-  rootFile=filename+"_"+name+"_COND2D_"+p+".root"		 
+  # cut='*'.join([cuts['common'],cuts[p],addCut,cuts['acceptanceGEN']])
+  cut='*'.join([cuts['common'],cuts[p],addCut])
+  rootFile=filename+"_"+name+"_COND2D_"+p+"_mjetNoAccGen.root"		 
   cmd='vvMake2DTemplateWithKernels.py  -o "{rootFile}" -s "{samples}" -c "{cut}"  -v "jj_gen_partialMass,jj_l1_gen_softDrop_mass"  -b {binsMVV} -B {binsMJJ} -x {minMVV} -X {maxMVV} -y {minMJJ} -Y {maxMJJ}  -r {res} samples'.format(rootFile=rootFile,samples=template,cut=cut,binsMVV=binsMVV,minMVV=minMVV,maxMVV=maxMVV,res=resFile,binsMJJ=binsMJJ,minMJJ=minMJJ,maxMJJ=maxMJJ)
   os.system(cmd)
 
