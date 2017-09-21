@@ -1,12 +1,11 @@
-from ROOT import TFile, TCanvas, TPaveText, TLegend, gDirectory, TH1F,gROOT
+from ROOT import TFile, TCanvas, TPaveText, TLegend, gDirectory, TH1F,gROOT,gStyle
 import sys
 import tdrstyle
 tdrstyle.setTDRStyle()
 from  CMGTools.VVResonances.plotting.CMS_lumi import *
 
 from time import sleep
-gROOT.SetBatch(True)
-
+# gROOT.SetBatch(True)
 infile = sys.argv[1]	 
 
 
@@ -48,6 +47,54 @@ def getPavetext():
 def getCanvas():
 	 c1 =TCanvas("c","",800,800)
 	 return c1
+
+def doMVVFit():
+	FqW = TFile("qW_signalfit/debug_JJ_XqW_MVV.json.root","READ")
+	FqZ = TFile("qZ_signalfit/debug_JJ_XqZ_MVV.json.root","READ")
+	
+	vars = ["MEAN","SIGMA","ALPHA","N","SCALESIGMA","f"]
+	for var in vars:
+		c = getCanvas()
+		l = getLegend()
+		gStyle.SetOptStat(0)
+		gStyle.SetOptTitle(0)
+		
+		
+		gqW = FqW.Get(var)
+		gqZ = FqZ.Get(var)
+		fqW = FqW.Get(var+"_func")
+		fqZ = FqZ.Get(var+"_func")
+		
+		beautify(gqW ,922)
+		beautify(gqZ ,418)
+		beautify(fqW ,922)
+		beautify(fqZ ,418)
+		
+		l.AddEntry(fqW,"qW","L")
+		l.AddEntry(fqZ,"qZ","L")
+		
+		gqW.GetXaxis().SetTitle("M_{VV} (GeV)")
+		gqW.GetYaxis().SetTitle(var)
+		gqW.GetYaxis().SetNdivisions(9,1,0)
+		gqW.GetYaxis().SetTitleOffset(1.7)
+		gqW.GetXaxis().SetRangeUser(1000., 6000.)
+		if var.find("ALPHA")!=-1: gqW.GetYaxis().SetRangeUser(0., 2.)
+		elif var.find("SCALESIGMA")!=-1: gqW.GetYaxis().SetRangeUser(0., 4.)
+		elif var.find("SIGMA")!=-1: gqW.GetYaxis().SetRangeUser(0., 370.)
+		elif var.find("MEAN")!=-1: gqW.GetYaxis().SetRangeUser(700., 7000)
+		elif var.find("N")!=-1: gqW.GetYaxis().SetRangeUser(115., 135.)
+		elif var.find("f")!=-1: gqW.GetYaxis().SetRangeUser(0., 1.)
+
+		gqW.Draw("AP")
+		gqZ.Draw("sameP")
+		fqW.Draw("sameL")
+		fqZ.Draw("sameL")
+		l.Draw("same")
+		cmslabel_sim(c,'2016',11)
+		c.Update()
+		c.SaveAs("/eos/user/t/thaarres/www/vvana/SignalShapesMVV/"+var+"_fit.png")
+		
+
 
 def doResolution():
 	fLP = TFile("JJ_nonRes_detectorResponse_LP.root","READ")
@@ -328,9 +375,74 @@ def do2DKernel(f):
 		c.SaveAs("/eos/user/t/thaarres/www/vvana/2Dkernel/projX_perBin/projX_mvv_massbin%i.png"%bin)
 
 
+def compare2DKernel(f):
+	colors= [1,418,434,802,618,1,7,8,9,40,41,42,43]
+	
+	fromKernel 			= f.Get("histo")
+	fromSim    			= f.Get("mjet_mvv")
+	
+	c = getCanvas()
+	c.cd()
+	fromKernel.Draw("COLZ")
+	c.SaveAs("/eos/user/t/thaarres/www/vvana/2Dkernel/mjetReso/NoAccGen_fromKernel.png")
+	c = getCanvas()
+	c.cd()
+	fromSim.Draw("COLZ")
+	c.SaveAs("/eos/user/t/thaarres/www/vvana/2Dkernel/mjetReso/NoAccGen_fromSim.png")
+	 #X==JetMass Y==MVV
+
+
+	histsAllY = []
+	hAllYfromKernel 		= fromKernel    .ProjectionY()
+	hAllYfromSim 		    = fromSim       .ProjectionY()
+	histsAllY.append(hAllYfromSim 	)
+	histsAllY.append(hAllYfromKernel 	)
+
+	c = getCanvas()
+	for col,h in enumerate (histsAllY):
+		beautify(h,colors[col])
+		h.Rebin(2)
+		# h.GetXaxis().SetRangeUser(0.,610.)
+		h.GetXaxis().SetTitle("Mass (GeV)")
+		h.GetYaxis().SetTitle("A.U")
+		if h.GetName().find("sim")!=-1: h.DrawNormalized("Esame")
+		else: h.DrawNormalized("HISTsame")
+	l = getLegend()
+	l.AddEntry(hAllYfromSim       		,"MC events (Pythia8)","LEP")
+	l.AddEntry(hAllYfromKernel    		,"Nominal (Pythia8)","L")
+
+	l.Draw("same")
+	c.SaveAs("/eos/user/t/thaarres/www/vvana/2Dkernel/mjetReso/NoAccGen_projY_mass_allmvvbins.png")
+
+	histsAllX = []
+	hAllXfromKernel 		= fromKernel    .ProjectionX()
+	hAllXfromSim 		    = fromSim       .ProjectionX()
+	histsAllX.append(hAllXfromSim 	)
+	histsAllX.append(hAllXfromKernel 	)
+
+	c = getCanvas()
+	l = getLegend()
+	l.AddEntry(hAllXfromSim       ,"MC events (Pythia8)","LEP")
+	l.AddEntry(hAllXfromKernel    ,"Nominal (Pythia8)","L")
+	
+
+	for col,h in enumerate (histsAllX):
+		beautify(h,colors[col])
+		# h.GetXaxis().SetRangeUser(1000.,7000.)
+		h.GetXaxis().SetTitle("M_{jj} (GeV)")
+		h.GetYaxis().SetTitle("A.U")
+		if h.GetName().find("sim")!=-1: h.DrawNormalized("Esame")
+		else: h.DrawNormalized("HISTsame")
+	l.Draw("same")
+	c.SaveAs("/eos/user/t/thaarres/www/vvana/2Dkernel/mjetReso/NoAccGen_projX_mvv_allmassbins.png")
+
+
+
 # doResolution()
 # doKernel(f)
 # doScale(f)
-do2DKernel(f)
+# do2DKernel(f)
+# compare2DKernel(f)
+doMVVFit()
 f  .Close()
 
