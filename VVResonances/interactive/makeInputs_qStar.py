@@ -105,12 +105,12 @@ def makeBackgroundShapesMVVConditional(name,filename,template,addCut=""):
 	
  template += ",QCD_HT,QCD_Pt-"
  for p in purities:
-  resFile=filename+"_"+name+"_detectorResponse_"+p+"_mjet.root"	
+  resFile=filename+"_"+name+"_detectorResponse_"+p+".root"	
 
   print "=========== PURITY: ", p
   # cut='*'.join([cuts['common'],cuts[p],addCut,cuts['acceptanceGEN']])
   cut='*'.join([cuts['common'],cuts[p],addCut])
-  rootFile=filename+"_"+name+"_COND2D_"+p+"_mjetNoAccGen.root"		 
+  rootFile=filename+"_"+name+"_COND2D_"+p+".root"		 
   cmd='vvMake2DTemplateWithKernels.py  -o "{rootFile}" -s "{samples}" -c "{cut}"  -v "jj_gen_partialMass,jj_l1_gen_softDrop_mass"  -b {binsMVV} -B {binsMJJ} -x {minMVV} -X {maxMVV} -y {minMJJ} -Y {maxMJJ}  -r {res} samples'.format(rootFile=rootFile,samples=template,cut=cut,binsMVV=binsMVV,minMVV=minMVV,maxMVV=maxMVV,res=resFile,binsMJJ=binsMJJ,minMJJ=minMJJ,maxMJJ=maxMJJ)
   os.system(cmd)
 
