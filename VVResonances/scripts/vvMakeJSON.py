@@ -61,9 +61,14 @@ for string in graphStr:
             func.SetParameter(i,0)
     
     graph.Fit(func,"","",options.min,options.max)
+    graph.Fit(func,"","",options.min,options.max)
+    graph.Fit(func,"","",options.min,options.max)
     parameterization[comps[0]]=returnString(func)
     graph.Write(comps[0])
     func.Write(comps[0]+"_func")
+    c = ROOT.TCanvas()
+    graph.Draw()
+    c.SaveAs("debug_"+comps[0]+".png")
 
 ff.Close()
 f=open(options.output,"w")
