@@ -36,7 +36,7 @@ def mirror(histo,histoNominal,name):
         for j in range(1,histo.GetNbinsY()+1):
             up=histo.GetBinContent(i,j)/intUp
             nominal=histoNominal.GetBinContent(i,j)/intNominal
-            newHisto.SetBinContent(i,j,nominal*nominal/up)
+            newHisto.SetBinContent(i,j,histoNominal.GetBinContent(i,j)*nominal/up)
     return newHisto       
 	
 def expandHisto(histo,options):
@@ -178,21 +178,30 @@ for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
    datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'jj_l1_gen_pt',scale_x,scale_y,res_x,res_y,histTMP)
   else: datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'jj_l1_gen_softDrop_mass',scale_x,scale_y,res_x,res_y,histTMP)
 
+  #if histTMP.Integral()>0:
+  # histTMP.Scale(histI.Integral()/histTMP.Integral())
+  # histogram.Add(histTMP)
+  #if histI2D.Integral()>0: 
+  # histI2D.Scale(histI.Integral()/histI2D.Integral())
+  # mjet_mvv_nominal.Add(histI2D)
+
   if histTMP.Integral()>0:
-   histTMP.Scale(histI.Integral()/histTMP.Integral())
+   histTMP.Scale(histI2D.Integral()/histTMP.Integral())
    histogram.Add(histTMP)
+   #histI2D.Scale(histI.Integral()/histI2D.Integral())
    mjet_mvv_nominal.Add(histI2D)
- 
+   
+  #histI.Delete()  
   histI2D.Delete()	  
   histTMP.Delete()
 
  if len(sampleTypes)<2: continue 
  elif plotter.filename.find(sampleTypes[1]) != -1: #alternative shape Herwig
-  print "Preparing alternative shapes for sampletype " ,sampleTypes[2]
+  print "Preparing alternative shapes for sampletype " ,sampleTypes[1]
   print "filename: ", plotter.filename, " preparing alternate shape histo"
 
-  histI=plotter.drawTH1(variables[0],options.cut,"1",1,0,1000000000)
-  norm=histI.Integral()
+  #histI=plotter.drawTH1(variables[0],options.cut,"1",1,0,1000000000)
+  #norm=histI.Integral()
 
   histI2D=plotter.drawTH2("jj_l1_softDrop_mass:jj_LV_mass",options.cut,"1",options.binsx,options.minx,options.maxx,options.binsy,options.miny,options.maxy,"M_{qV} mass","GeV","Softdrop mass","GeV","COLZ" )
   histTMP=ROOT.TH2F("histoTMP","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
@@ -205,11 +214,19 @@ for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
    datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'jj_l1_gen_pt',scale_x,scale_y,res_x,res_y,histTMP)
   else: datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'jj_l1_gen_softDrop_mass',scale_x,scale_y,res_x,res_y,histTMP)
 
+  #if histTMP.Integral()>0:
+  #  histTMP.Scale(histI.Integral()/histTMP.Integral())
+  #  histogram_altshapeUp.Add(histTMP)
+  #if histI2D.Integral()>0: 
+  #  histI2D.Scale(histI.Integral()/histI2D.Integral())
+  #  mjet_mvv_altshapeUp.Add(histI2D)
+
   if histTMP.Integral()>0:
-    histTMP.Scale(histI.Integral()/histTMP.Integral())
+    histTMP.Scale(histI2D.Integral()/histTMP.Integral())
     histogram_altshapeUp.Add(histTMP)
     mjet_mvv_altshapeUp.Add(histI2D)
-
+   
+  #histI.Delete()  
   histI2D.Delete()
   histTMP.Delete()
 
@@ -218,8 +235,8 @@ for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
   print "Preparing alternative shapes for sampletype " ,sampleTypes[2]
   print "filename: ", plotter.filename, " preparing alternate shape histo"
 
-  histI=plotter.drawTH1(variables[0],options.cut,"1",1,0,1000000000)
-  norm=histI.Integral()
+  #histI=plotter.drawTH1(variables[0],options.cut,"1",1,0,1000000000)
+  #norm=histI.Integral()
 
   histI2D=plotter.drawTH2("jj_l1_softDrop_mass:jj_LV_mass",options.cut,"1",options.binsx,options.minx,options.maxx,options.binsy,options.miny,options.maxy,"M_{qV} mass","GeV","Softdrop mass","GeV","COLZ" )
   histTMP=ROOT.TH2F("histoTMP","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
@@ -232,11 +249,19 @@ for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
    datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'jj_l1_gen_pt',scale_x,scale_y,res_x,res_y,histTMP)
   else: datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'jj_l1_gen_softDrop_mass',scale_x,scale_y,res_x,res_y,histTMP)
 
+  #if histTMP.Integral()>0:
+  #  histTMP.Scale(histI.Integral()/histTMP.Integral())
+  #  histogram_altshape2.Add(histTMP)
+  #if histI2D.Integral()>0:  
+  #  histI2D.Scale(histI.Integral()/histI2D.Integral())
+  #  mjet_mvv_altshape2.Add(histI2D)
+
   if histTMP.Integral()>0:
     histTMP.Scale(histI.Integral()/histTMP.Integral())
-    histogram_altshape2.Add(histTMP)
+    histogram_altshape2.Add(histTMP) 
     mjet_mvv_altshape2.Add(histI2D)
-
+    
+  #histI.Delete()  
   histI2D.Delete()
   histTMP.Delete()
 
