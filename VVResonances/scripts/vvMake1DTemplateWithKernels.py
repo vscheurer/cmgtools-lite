@@ -38,7 +38,20 @@ def mirror(histo,histoNominal,name):
         nominal=histoNominal.GetBinContent(i)/intNominal
         newHisto.SetBinContent(i,histoNominal.GetBinContent(i)*nominal/up)
     return newHisto      
-	
+
+def unequalScale(histo,name,alpha,power=1):
+    newHistoU =copy.deepcopy(histo) 
+    newHistoU.SetName(name+"Up")
+    newHistoD =copy.deepcopy(histo) 
+    newHistoD.SetName(name+"Down")
+    for i in range(1,histo.GetNbinsX()+1):
+        x= histo.GetXaxis().GetBinCenter(i)
+        nominal=histo.GetBinContent(i)
+        factor = 1+alpha*pow(x,power) 
+        newHistoU.SetBinContent(i,nominal*factor)
+        newHistoD.SetBinContent(i,nominal/factor)
+    return newHistoU,newHistoD 
+    	
 def smoothTail(hist):
 
     bin_1200=hist.GetXaxis().FindBin(1200)
@@ -107,32 +120,53 @@ fcorr=ROOT.TFile(options.res)
 scale = fcorr.Get("scale"+options.resHisto+"Histo")
 res   = fcorr.Get("res"  +options.resHisto+"Histo")
 
+scaleUp = ROOT.TH1F(scale)
+scaleUp.SetName("scaleUp")
+scaleDown = ROOT.TH1F(scale)
+scaleDown.SetName("scaleDown")
+for i in range(1,res.GetNbinsX()+1):
+    if options.resHisto=="x":
+        scaleUp.SetBinContent(i,scale.GetBinContent(i)+0.1)
+        scaleDown.SetBinContent(i,scale.GetBinContent(i)-0.1)
+    else:
+        scaleUp.SetBinContent(i,scale.GetBinContent(i)+0.3)
+        scaleDown.SetBinContent(i,scale.GetBinContent(i)-0.3)
+	
 #distribution of mjet from simulation --> use to validate kernel
 mjet_nominal=ROOT.TH1F("mjet_nominal","mjet_nominal",options.binsx,options.minx,options.maxx)
 mjet_nominal.Sumw2()
+histogram_nominal=ROOT.TH1F("histo_nominal","histo_nominal",options.binsx,options.minx,options.maxx)
+histogram_nominal.Sumw2()
+histogram_nominal_scale_up=ROOT.TH1F("histo_nominal_ScaleUp","histo_nominal_ScaleUp",options.binsx,options.minx,options.maxx)
+histogram_nominal_scale_up.Sumw2()
+histogram_nominal_scale_down=ROOT.TH1F("histo_nominal_ScaleDown","histo_nominal_ScaleDown",options.binsx,options.minx,options.maxx)
+histogram_nominal_scale_down.Sumw2()
 
 mjet_altshapeUp=ROOT.TH1F("mjet_altshapeUp","mjet_altshapeUp",options.binsx,options.minx,options.maxx)
 mjet_altshapeUp.Sumw2()
+histogram_altshapeUp=ROOT.TH1F("histo_altshapeUp","histo_altshapeUp",options.binsx,options.minx,options.maxx)
+histogram_altshapeUp.Sumw2()
+histogram_altshape_scale_up=ROOT.TH1F("histo_altshape_ScaleUp","histo_altshape_ScaleUp",options.binsx,options.minx,options.maxx)
+histogram_altshape_scale_up.Sumw2()
+histogram_altshape_scale_down=ROOT.TH1F("histo_altshape_ScaleDown","histo_altshape_ScaleDown",options.binsx,options.minx,options.maxx)
+histogram_altshape_scale_down.Sumw2()
 
 mjet_altshape2=ROOT.TH1F("mjet_altshape2","mjet_altshape2",options.binsx,options.minx,options.maxx)
 mjet_altshape2.Sumw2()
-
-histogram_nominal=ROOT.TH1F("histo_nominal","histo_nominal",options.binsx,options.minx,options.maxx)
-histogram_nominal.Sumw2()
-
-histogram_altshapeUp=ROOT.TH1F("histo_altshapeUp","histo_altshapeUp",options.binsx,options.minx,options.maxx)
-histogram_altshapeUp.Sumw2()
-
 histogram_altshape2=ROOT.TH1F("histo_altshape2","histo_altshape2",options.binsx,options.minx,options.maxx)
 histogram_altshape2.Sumw2()
 
 histograms=[
-    histogram_nominal,
-    histogram_altshapeUp,
-    histogram_altshape2,
     mjet_nominal,
+    histogram_nominal,
+    histogram_nominal_scale_up,
+    histogram_nominal_scale_down,
     mjet_altshapeUp,
-    mjet_altshape2
+    histogram_altshapeUp,
+    histogram_altshape_scale_up,
+    histogram_altshape_scale_down,
+    mjet_altshape2,
+    histogram_altshape2
 	]
 
 maxEvents = -1
@@ -146,9 +180,11 @@ for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
    
    #histI=plotter.drawTH1(options.var,options.cut,"1",1,0,1000000000)   
    histI2=plotter.drawTH1('jj_l1_softDrop_mass',options.cut,"1",options.binsx,options.minx,options.maxx)
-   
+
+   print " - Creating dataset - "   
    dataset=plotterNW.makeDataSet('jj_gen_partialMass,jj_l1_gen_pt,'+options.var,options.cut,maxEvents)     
-   
+
+   print " - Creating 1D gaussian template - "   
    histTMP=ROOT.TH1F("histoTMP","histo",options.binsx,options.minx,options.maxx)   
    if not(options.usegenmass): 
     datamaker=ROOT.cmg.GaussianSumTemplateMaker1D(dataset,options.var,'jj_l1_gen_pt',scale,res,histTMP)
@@ -166,6 +202,29 @@ for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
     
    histTMP.Delete()
 
+   print " - Creating 1D gaussian template scale up - "
+   histTMP=ROOT.TH1F("histoTMP","histo",options.binsx,options.minx,options.maxx)
+   if not(options.usegenmass): 
+    datamaker=ROOT.cmg.GaussianSumTemplateMaker1D(dataset,options.var,'jj_l1_gen_pt',scaleUp,res,histTMP)
+   else: datamaker=ROOT.cmg.GaussianSumTemplateMaker1D(dataset,options.var,'jj_l1_gen_softDrop_mass',scaleUp,res,histTMP) 
+   if histTMP.Integral()>0:
+    histTMP.Scale(histI2.Integral()/histTMP.Integral())
+    histogram_nominal_scale_up.Add(histTMP)
+
+   histTMP.Delete()
+
+   print " - Creating 1D gaussian template scale down - "   
+   histTMP=ROOT.TH1F("histoTMP","histo",options.binsx,options.minx,options.maxx)
+   if not(options.usegenmass): 
+    datamaker=ROOT.cmg.GaussianSumTemplateMaker1D(dataset,options.var,'jj_l1_gen_pt',scaleDown,res,histTMP)
+   else: datamaker=ROOT.cmg.GaussianSumTemplateMaker1D(dataset,options.var,'jj_l1_gen_softDrop_mass',scaleDown,res,histTMP) 
+   if histTMP.Integral()>0:
+    histTMP.Scale(histI2.Integral()/histTMP.Integral())
+    histogram_nominal_scale_down.Add(histTMP)
+   
+   histTMP.Delete()
+   histI2.Delete()
+    	
  if len(sampleTypes)<2: continue
  elif plotter.filename.find(sampleTypes[1]) != -1: #alternative shape Herwig
    print "Preparing alternative shapes for sampletype " ,sampleTypes[1]
@@ -174,8 +233,10 @@ for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
    #histI=plotter.drawTH1(options.var,options.cut,"1",1,0,1000000000)
    histI2=plotter.drawTH1('jj_l1_softDrop_mass',options.cut,"1",options.binsx,options.minx,options.maxx)
 
+   print " - Creating dataset - "
    dataset=plotterNW.makeDataSet('jj_gen_partialMass,jj_l1_gen_pt,'+options.var,options.cut,maxEvents)     
-   
+
+   print " - Creating 1D gaussian template - "   
    histTMP=ROOT.TH1F("histoTMP","histo",options.binsx,options.minx,options.maxx)    
    if not(options.usegenmass): 
     datamaker=ROOT.cmg.GaussianSumTemplateMaker1D(dataset,options.var,'jj_l1_gen_pt',scale,res,histTMP)
@@ -192,7 +253,30 @@ for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
     mjet_altshapeUp.Add(histI2)
     
    histTMP.Delete()
-		          	      
+
+   print " - Creating 1D gaussian template scale up - "
+   histTMP=ROOT.TH1F("histoTMP","histo",options.binsx,options.minx,options.maxx)
+   if not(options.usegenmass): 
+    datamaker=ROOT.cmg.GaussianSumTemplateMaker1D(dataset,options.var,'jj_l1_gen_pt',scaleUp,res,histTMP)
+   else: datamaker=ROOT.cmg.GaussianSumTemplateMaker1D(dataset,options.var,'jj_l1_gen_softDrop_mass',scaleUp,res,histTMP) 
+   if histTMP.Integral()>0:
+    histTMP.Scale(histI2.Integral()/histTMP.Integral())
+    histogram_altshape_scale_up.Add(histTMP)
+
+   histTMP.Delete()
+
+   print " - Creating 1D gaussian template scale down - "   
+   histTMP=ROOT.TH1F("histoTMP","histo",options.binsx,options.minx,options.maxx)
+   if not(options.usegenmass): 
+    datamaker=ROOT.cmg.GaussianSumTemplateMaker1D(dataset,options.var,'jj_l1_gen_pt',scaleDown,res,histTMP)
+   else: datamaker=ROOT.cmg.GaussianSumTemplateMaker1D(dataset,options.var,'jj_l1_gen_softDrop_mass',scaleDown,res,histTMP) 
+   if histTMP.Integral()>0:
+    histTMP.Scale(histI2.Integral()/histTMP.Integral())
+    histogram_altshape_scale_down.Add(histTMP)
+   
+   histTMP.Delete()
+   histI2.Delete()
+   		          	      
  if len(sampleTypes)<3: continue
  elif plotter.filename.find(sampleTypes[2]) != -1: #alternative shape Pythia8+Madgraph (not used for syst but only for cross checks)
    print "Preparing alternative shapes for sampletype " ,sampleTypes[2]
@@ -200,9 +284,11 @@ for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
    
    #histI=plotter.drawTH1(options.var,options.cut,"1",1,0,1000000000)
    histI2=plotter.drawTH1('jj_l1_softDrop_mass',options.cut,"1",options.binsx,options.minx,options.maxx)
-
+ 
+   print " - Creating dataset - "
    dataset=plotterNW.makeDataSet('jj_gen_partialMass,jj_l1_gen_pt,'+options.var,options.cut,maxEvents)     
    
+   print " - Creating 1D gaussian template - "
    histTMP=ROOT.TH1F("histoTMP","histo",options.binsx,options.minx,options.maxx)    
    if not(options.usegenmass): 
     datamaker=ROOT.cmg.GaussianSumTemplateMaker1D(dataset,options.var,'jj_l1_gen_pt',scale,res,histTMP)
