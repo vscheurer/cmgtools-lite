@@ -10,6 +10,9 @@ from CMGTools.VVResonances.plotting.tdrstyle import *
 setTDRStyle()
 from CMGTools.VVResonances.plotting.TreePlotter import TreePlotter
 from CMGTools.VVResonances.plotting.MergedPlotter import MergedPlotter
+from multiprocessing import Process
+
+
 ROOT.gSystem.Load("libCMGToolsVVResonances")
 parser = optparse.OptionParser()
 parser.add_option("-o","--output",dest="output",help="Output",default='')
@@ -167,7 +170,9 @@ histograms=[
     histogram_altshape_scale_down,    
     histogram_altshape2
 ]
-
+# do if only nominal shapes should be calculated
+if len(sampleTypes)<2:
+    histograms=[histogram]
 #ok lets populate!
 
 maxEvents = -1
@@ -213,7 +218,7 @@ for plotter,plotterNW in zip(dataPlotters,dataPlottersNW):
 
   print " - Creating 2D gaussian template scale up - "
   histTMP=ROOT.TH2F("histoTMP","histo",len(binsx)-1,array('f',binsx),len(binsy)-1,array('f',binsy))
-  if not(options.usegenmass): 
+  if not(options.usegenmass):
    datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'jj_l1_gen_pt',scaleUp,scale_y,res_x,res_y,histTMP)
   else: datamaker=ROOT.cmg.GaussianSumTemplateMaker(dataset,variables[0],variables[1],'jj_l1_gen_softDrop_mass',scaleUp,scale_y,res_x,res_y,histTMP)
 
@@ -352,9 +357,10 @@ mjet_mvv_altshapeUp.Write()
 mjet_mvv_altshape2.Write()
 
 # ##Mirror Herwig shape
-histogram_altshapeDown=mirror(finalHistograms['histo_altshapeUp'],finalHistograms['histo_nominal'],"histo_altshapeDown")
-conditional(histogram_altshapeDown)
-histogram_altshapeDown.Write()
+if len(sampleTypes)>1:
+    histogram_altshapeDown=mirror(finalHistograms['histo_altshapeUp'],finalHistograms['histo_nominal'],"histo_altshapeDown")
+    conditional(histogram_altshapeDown)
+    histogram_altshapeDown.Write()
         		
 f.Close()
 
