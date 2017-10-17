@@ -1,5 +1,6 @@
 import ROOT
 import os,sys
+import time
 
 cuts={}
 
@@ -12,13 +13,13 @@ cuts['nonres'] = '1'
 purities=['HP','LP']
 purities=['HP']
 
-qWTemplate="QstarToQW"
-qZTemplate="QstarToQZ"
+qWTemplate="QstarQW"
+qZTemplate="QstarQZ"
 BRqW=1.
 BRqZ=1.
 
 dataTemplate="JetHT"
-nonResTemplate="QCD_Pt_"
+nonResTemplate="QCD_Pt-"
 
 
 minMJJ=30.0
@@ -92,7 +93,7 @@ def makeDetectorResponse(name,filename,template,addCut="1"):
 		 
 def makeBackgroundShapesMJJKernel(name,filename,template,addCut="1"):
  
- template += ",QCD_Pt-,QCD_HT"
+ #template += ",QCD_Pt-,QCD_HT"
  for p in purities:
   resFile=filename+"_"+name+"_detectorResponse_"+p+".root"	
   print "=========== PURITY: ", p
@@ -106,7 +107,7 @@ def makeBackgroundShapesMJJKernel(name,filename,template,addCut="1"):
 
 def makeBackgroundShapesMVVKernel(name,filename,template,addCut="1"):
  
- template += ",QCD_Pt-,QCD_HT"
+ #template += ",QCD_Pt-,QCD_HT"
  for p in purities:
   resFile=filename+"_"+name+"_detectorResponse_"+p+".root"	
   print "=========== PURITY: ", p
@@ -119,7 +120,7 @@ def makeBackgroundShapesMVVKernel(name,filename,template,addCut="1"):
 
 def makeBackgroundShapesMJJSpline(name,filename,template,addCut="1"):
 
- template += ",QCD_Pt-,QCD_HT"
+ #template += ",QCD_Pt-,QCD_HT"
  for p in purities:
   print "=========== PURITY: ", p
   cut='*'.join([cuts['common'],cuts[p],addCut,cuts['acceptance']])
@@ -129,7 +130,7 @@ def makeBackgroundShapesMJJSpline(name,filename,template,addCut="1"):
 		
 def makeBackgroundShapesMVVConditional(name,filename,template,addCut=""):
 	
- template += ",QCD_Pt-,QCD_HT"
+ #template += ",QCD_Pt-,QCD_HT"
  for p in purities:
   resFile=filename+"_"+name+"_detectorResponse_"+p+".root"	
   print "=========== PURITY: ", p
@@ -156,23 +157,26 @@ def makeNormalizations(name,filename,template,data=0,addCut='1',factor=1):
    cmd='vvMakeData.py -s "{samples}" -d {data} -c "{cut}"  -o "{rootFile}" -v "jj_LV_mass,jj_l1_softDrop_mass" -b "{BINS},{bins}" -m "{MINI},{mini}" -M "{MAXI},{maxi}" -f {factor} -n "{name}"  samples'.format(samples=template,cut=cut,rootFile=rootFile,BINS=binsMVV,bins=binsMJJ,MINI=minMVV,MAXI=maxMVV,mini=minMJJ,maxi=maxMJJ,factor=factor,name=name,data=data)
    os.system(cmd)
 
+start_time = time.time()
 									
-makeSignalShapesMVV("JJ_XqW",qWTemplate)
-makeSignalShapesMJJ("JJ_XqW",qWTemplate)
-makeSignalYields("JJ_XqW",qWTemplate,BRqW,{'HP':0.99,'LP':1.03})
+#makeSignalShapesMVV("JJ_XqW",qWTemplate)
+#makeSignalShapesMJJ("JJ_XqW",qWTemplate)
+#makeSignalYields("JJ_XqW",qWTemplate,BRqW,{'HP':0.99,'LP':1.03})
 
-makeSignalShapesMVV("JJ_XqZ",qZTemplate)
-makeSignalShapesMJJ("JJ_XqZ",qZTemplate)
-makeSignalYields("JJ_XqZ",qZTemplate,BRqZ,{'HP':0.99,'LP':1.03})
+#makeSignalShapesMVV("JJ_XqZ",qZTemplate)
+#makeSignalShapesMJJ("JJ_XqZ",qZTemplate)
+#makeSignalYields("JJ_XqZ",qZTemplate,BRqZ,{'HP':0.99,'LP':1.03})
 
-makeDetectorResponse("nonRes","JJ",nonResTemplate,cuts['nonres'])
-makeBackgroundShapesMJJSpline("nonRes","JJ",nonResTemplate,cuts['nonres'])
+#makeDetectorResponse("nonRes","JJ",nonResTemplate,cuts['nonres'])
+#makeBackgroundShapesMJJSpline("nonRes","JJ",nonResTemplate,cuts['nonres'])  #either splines OR kernel
 makeBackgroundShapesMJJKernel("nonRes","JJ",nonResTemplate,cuts['nonres'])
 makeBackgroundShapesMVVKernel("nonRes","JJ",nonResTemplate,cuts['nonres'])
 makeBackgroundShapesMVVConditional("nonRes","JJ",nonResTemplate,cuts['nonres'])
 mergeBackgroundShapes("nonRes","JJ")
 
-makeNormalizations("nonRes","JJ",nonResTemplate,0,cuts['nonres'],1.0)
-makeNormalizations("data","JJ","QCD_HT",0,cuts['nonres'],1.0)
-makeNormalizations("data","JJ",dataTemplate,1)
+#makeNormalizations("nonRes","JJ",nonResTemplate,0,cuts['nonres'],1.0)
+#makeNormalizations("data","JJ","QCD_HT",0,cuts['nonres'],1.0)
+#makeNormalizations("data","JJ",dataTemplate,1)
 
+finish_time = time.time()
+print "time: ", finish_time - start_time
