@@ -19,7 +19,8 @@ BRqW=1.
 BRqZ=1.
 
 dataTemplate="JetHT"
-nonResTemplate="QCD_Pt-"
+
+nonResTemplate="QCD_Pt_3"
 
 
 minMJJ=30.0
@@ -167,12 +168,12 @@ start_time = time.time()
 #makeSignalShapesMJJ("JJ_XqZ",qZTemplate)
 #makeSignalYields("JJ_XqZ",qZTemplate,BRqZ,{'HP':0.99,'LP':1.03})
 
-#makeDetectorResponse("nonRes","JJ",nonResTemplate,cuts['nonres'])
+makeDetectorResponse("nonRes","JJ",nonResTemplate,cuts['nonres'])
 #makeBackgroundShapesMJJSpline("nonRes","JJ",nonResTemplate,cuts['nonres'])  #either splines OR kernel
 makeBackgroundShapesMJJKernel("nonRes","JJ",nonResTemplate,cuts['nonres'])
 makeBackgroundShapesMVVKernel("nonRes","JJ",nonResTemplate,cuts['nonres'])
 makeBackgroundShapesMVVConditional("nonRes","JJ",nonResTemplate,cuts['nonres'])
-mergeBackgroundShapes("nonRes","JJ")
+##mergeBackgroundShapes("nonRes","JJ")
 
 #makeNormalizations("nonRes","JJ",nonResTemplate,0,cuts['nonres'],1.0)
 #makeNormalizations("data","JJ","QCD_HT",0,cuts['nonres'],1.0)
